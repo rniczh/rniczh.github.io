@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+    
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>
+      
+  Hugo is Awesome &ndash; &lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿
+
+    </title>
+    
+    
+    <meta name="description" property="og:description" content="這是這個Blog的第一篇文章，既然如此就來講講這個Blog的建構吧，以便於我之後忘記細節時也有個參考， 如題，這個Blog是基於Hugo，而Theme則是使用Hugo-Primer。
+|Meow ~">
+    
+
+    <meta name="apple-mobile-web-app-title" content="&lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿">
+    
+    
+    <link rel="icon" href="/favicon-64.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="mask-icon" size="any" href="/pinned-icon.svg">
+    
+    
+    
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:site" content="@cinr4">
+    <meta name="twitter:creator" content="@cinr4">
+    <meta name="twitter:title" content="Hugo is Awesome | &lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿">
+    <meta name="twitter:description" content="這是這個Blog的第一篇文章，既然如此就來講講這個Blog的建構吧，以便於我之後忘記細節時也有個參考，
+如題，這個Blog是基於Hugo，而Theme則是使用Hugo-Primer。|Meow ~">
+    <meta name="twitter:image" content="https://rniczh.github.ioimg/hugo-is-awesome/04.png">
+    
+
+
+    <link rel="stylesheet" href="/assets/syntax.css">
+    <link rel="stylesheet" href="/assets/primer-build.css">
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+    <link rel="stylesheet" href="/assets/style.css">
+  </head>
+
+
+  <body class="bg-gray">
+    <div id="holy" class="container-lg bg-white h-100">
+
+      <div id="header" class="px-1 bg-white">
+	<link rel="shortcut icon" href="/favicon.ico">
+<nav class="UnderlineNav UnderlineNav--right px-2">
+  <a class="UnderlineNav-actions muted-link h2" href="https://rniczh.github.io">
+    &lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿
+  </a>
+
+  
+  
+  <div class="UnderlineNav-body">
+    
+    
+    <a class="UnderlineNav-item " href="/blog/">
+      
+      <span>Blog</span>
+    </a>
+    
+    
+    
+    <a class="UnderlineNav-item " href="/">
+      
+      <span>Info</span>
+    </a>
+    
+    
+  </div>
+  
+</nav>
+
+      </div>
+
+      <div role="main" id="main" class="holy-main markdown-body px-4 bg-white">
+	
+
+
+
+
+
+
+
+<br/>
+<div class="Subhead"  style="background-color: #dbebff; border-radius: 10px;  border:20px #dbebff solid;">
+  <div class="Subhead-heading">
+    <div class="h1 mt-3 mb-1">Hugo is Awesome</div>
+  </div>
+  <div class="Subhead-description">
+    
+
+<a style="text-decoration: none;" href='/categories/blog' class="muted-link">
+  <span class="Label Label--gray-darker">Blog</span>
+</a>
+
+
+
+<a style="text-decoration: none;" href='/tags/hugo' class="muted-link">
+  <span class="Label Label--gray">hugo</span>
+</a>
+
+<a style="text-decoration: none;" href='/tags/blog' class="muted-link">
+  <span class="Label Label--gray">blog</span>
+</a>
+
+<a style="text-decoration: none;" href='/tags/emacs' class="muted-link">
+  <span class="Label Label--gray">emacs</span>
+</a>
+
+
+
+    
+    <div class="float-md-right">
+      <span title="Lastmod: 2019-05-03. Published at: 2019-05-03.">
+	
+	  Published: 2019-05-03
+	
+      </span>
+    </div>
+    
+  </div>
+</div>
+<article>
+  
+  <section class="pb-6 mb-3 border-bottom">
+    <p>這是這個Blog的第一篇文章，既然如此就來講講這個Blog的建構吧，以便於我之後忘記細節時也有個參考，
+如題，這個Blog是基於<a href="https://gohugo.io/">Hugo</a>，而Theme則是使用<a href="https://github.com/qqhann/hugo-primer">Hugo-Primer</a>。</p>
+
+<p>在接下來的段落裡，我會依序講述以下幾個內容：</p>
+
+<ol>
+<li>Hugo + Theme</li>
+<li>Configuration</li>
+<li>Emacs(easy-hugo)</li>
+<li>Emacs(ox-hugo)</li>
+</ol>
+
+<p>而正常來說你應該只需要知道前兩項，因為第三項開始是因為我想用Emacs來管理文章，並且打算使用Org撰寫而不是Markdown，因此所衍生出的問題 😅</p>
+
+<p><strong>Note:</strong> 因為Hugo的官方文章寫的太清楚了，而通常會有問題的地方八成都跟<a href="https://gohugo.io/content-management/">Content-Management</a>有關係（因為要改別人的Theme之類的都一定會弄到），
+概略的翻過它不會花多少時間，之後有問題也會知道該到哪裡翻資料。</p>
+
+<h2 id="hugo-theme">Hugo + Theme</h2>
+
+<h3 id="install-hugo">Install Hugo</h3>
+
+<p>這部份可以看<a href="https://gohugo.io/getting-started">Hugo-Basic-Usage</a>了解，因為我是用Arch Linux，所以就直接用Pacman安裝就好，安裝好後找一個地方放Blog</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell">$ sudo pacman -S hugo
+$ hugo new site /path/to/your/blog</code></pre></div>
+<p>然後就可以在那目錄下找到以下內容：</p>
+
+<div class="image-gallery">
+<img style="float:right; border-radius: 10px;" src="/img/hugo-is-awesome/01.png" height="177"  />
+
+▹ &nbsp; <b>default.md :</b> Post的基本樣板 <br/>
+▹ &nbsp; <b>config.toml :</b> 網站的配置文件 <br/>
+▸ &nbsp; <b>content/ :</b> 文章放置處  <br/>
+▸ &nbsp; <b>data/ :</b> <a href="https://gohugo.io/templates/data-templates/">data-templates</a> <br/>
+▸ &nbsp; <b>layouts/ :</b> 網站的layout  <br/>
+▸ &nbsp; <b>static/ :</b> 靜態資源(e.g. image file) <br/>
+▸ &nbsp; <b>themes/ :</b> Themes <br/>
+
+<div class="clear"></div>
+</div>
+
+<h3 id="setup-theme">Setup Theme</h3>
+
+<p>這裡以<a href="https://github.com/qqhann/hugo-primer">Hugo-Primer</a>這個Theme為例，只有兩個步驟：</p>
+
+<ol>
+<li><p>將對方的Theme Clone下來放進你的themes目錄下</p>
+<div class="highlight"><pre class="chroma"><code class="language-shel" data-lang="shel">$ git clone https://github.com/qqhann/hugo-primer.git themes/hugo-primer</code></pre></div></li>
+
+<li><p>將此行設定至 <code>Config.toml</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="nv">theme</span> <span class="o">=</span> <span class="s2">&#34;hugo-primer&#34;</span></code></pre></div></li>
+</ol>
+
+<h3 id="preview-blog">Preview Blog</h3>
+
+<p>此時就可以嘗試去預覽Blog的情況：</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell">$ hugo server -D -F</code></pre></div>
+<p><strong>-D</strong> 代表Draft，在文章中的Params那設定 <code>Draft: true</code> 的文章必須用 <strong>-D</strong> 來顯示，
+這些文章在最後並不會Published上去，除非把它設定為 false。</p>
+
+<p><strong>-F</strong> 代表 Future，因為PublishedDate通常會是預定要發布的時間，所以都是&rdquo;未來&rdquo;，用這個方式才能在預覽時顯示未來的文章。</p>
+
+<p>然後在 <code>localhost:1313/</code> 就看到Blog目前的樣子了。</p>
+
+<h2 id="hugo-config">Hugo Config</h2>
+
+<p>設定方面指的是Config.toml的設定，由於在<a href="https://github.com/qqhann/hugo-primer">Hugo-Primer</a>那Readme已經有寫了Config的部份，
+這裡就只會針對他沒寫到的部份增加而已，而我自己有Fork了他的一份做修改，可以在<a href="https://github.com/rniczh/hugo-primer">Hugo-Primer-edited</a>找到。</p>
+
+<ol>
+<li><p>Paginate 這個變數是決定一頁要有多少文章，預設是10</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># Default = 10. This setting can be overridden within the template.</span>
+<span class="c1"># It&#39;s indicate how many posts can be placed in one page</span>
+<span class="c1"># detail: https://gohugo.io/templates/pagination/</span>
+<span class="nv">Paginate</span> <span class="o">=</span> <span class="m">10</span></code></pre></div></li>
+
+<li><p>Menu設定</p>
+
+<p>那個Theme提供的範例圖片右上角會有一個Menu就是在這裡設定，透過url來指定他在網址的位置，例如我把Info的部份設定到 <code>/</code> 主目錄下，
+所以連到我的Blog <a href="https://rniczh.github.io/">https://rniczh.github.io/</a> 會看到的是我的個人介紹，而 <code>/blog/</code> 則是Blog的文章列表，
+那接下來的問題就會是，怎麼顯示那個Page，其中 content/ 指向的url是 <code>/</code> ，所以再根據Hugo的規則</p>
+
+<ul>
+<li><p>新增 content/_index.md，則就會建立一個 url: <code>/</code> 下的頁面了</p></li>
+
+<li><p>相同地，新增 <code>content/blog/_index.md</code> 建立的就是 url: <code>/blog/</code> 下的頁面</p></li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">[[</span>menu.main<span class="o">]]</span>
+  <span class="nv">identifier</span> <span class="o">=</span> <span class="s2">&#34;blog&#34;</span>
+  <span class="nv">name</span> <span class="o">=</span> <span class="s2">&#34;Blog&#34;</span>
+  <span class="nv">title</span> <span class="o">=</span> <span class="s2">&#34;blog section&#34;</span>
+  <span class="nv">url</span> <span class="o">=</span> <span class="s2">&#34;/blog/&#34;</span>
+  <span class="c1"># weight is indicate the display order in menu</span>
+  <span class="nv">weight</span> <span class="o">=</span> -100
+
+<span class="o">[[</span>menu.main<span class="o">]]</span>
+  <span class="nv">identifier</span> <span class="o">=</span> <span class="s2">&#34;info&#34;</span>
+  <span class="nv">name</span> <span class="o">=</span> <span class="s2">&#34;Info&#34;</span>
+  <span class="nv">title</span> <span class="o">=</span> <span class="s2">&#34;info section&#34;</span>
+  <span class="nv">url</span> <span class="o">=</span> <span class="s2">&#34;/&#34;</span>
+  <span class="nv">weight</span> <span class="o">=</span> <span class="m">50</span></code></pre></div>
+<style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
+
+<div class="org-center">
+  <div></div>
+
+<div class="note">
+  <div></div>
+
+<p>_index.md will generate index.html</p>
+
+<p></div></p>
+
+<p></div></p></li>
+</ol>
+
+<p>之後寫文章就寫在content/blog/下，或者你不喜歡blog這樣的名稱，也可以改成posts之類的，只要記得相對應的設定記得改就好。</p>
+
+<h2 id="emacs-config">Emacs Config</h2>
+
+<blockquote>
+<p>來到這邊的你其實可以回頭了，除非也是要來設定Emacs的xD</p>
+</blockquote>
+
+<p>這邊有兩個工具（easy-hugo + ox-hugo）要使用，大致上處理流程如下圖</p>
+
+<style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
+
+<div class="org-center">
+  <div></div>
+
+<figure>
+    <img src="/img/hugo-is-awesome/02.png"
+         alt="Figure 1: easy-hugo &#43; ox-hugo in emacs"/> <figcaption>
+            <p>Figure 1: easy-hugo + ox-hugo in emacs</p>
+        </figcaption>
+</figure>
+
+
+<p></div></p>
+
+<h3 id="easy-hugo">Easy-Hugo</h3>
+
+<p><a href="https://github.com/masasam/emacs-easy-hugo">easy-hugo</a>我只是拿來管理文章而已，例如確認哪些目前是Draft的情形等等之類的，實際上發布或者預覽都是用shell上的hugo指令完成。</p>
+
+<p>而easy-hugo設定舉 github.io 為例：</p>
+<div class="highlight"><pre class="chroma"><code class="language-elisp" data-lang="elisp"><span class="p">(</span><span class="nb">use-package</span> <span class="nv">easy-hugo</span>
+  <span class="nb">:config</span>
+  <span class="p">(</span><span class="nb">setq</span> <span class="nv">easy-hugo-basedir</span> <span class="s">&#34;path/to/your/blog&#34;</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">setq</span> <span class="nv">easy-hugo-url</span> <span class="s">&#34;https://yourname.github.io&#34;</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">setq</span> <span class="nv">easy-hugo-postdir</span> <span class="s">&#34;content/blog/&#34;</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">setq</span> <span class="nv">easy-hugo-sshdomain</span> <span class="s">&#34;yourname.github.io&#34;</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">setq</span> <span class="nv">easy-hugo-root</span> <span class="s">&#34;/home/rnic/Project/githubio/hugoroot/&#34;</span><span class="p">)</span>
+  <span class="p">(</span><span class="nb">setq</span> <span class="nv">easy-hugo-previewtime</span> <span class="s">&#34;300&#34;</span><span class="p">)</span>
+<span class="p">)</span></code></pre></div>
+<style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
+
+<div class="org-center">
+  <div></div>
+
+<div class="note">
+  <div></div>
+
+<p>I&rsquo;m use `use-package` to manage package in Emacs</p>
+
+<p></div></p>
+
+<p></div></p>
+
+<h3 id="ox-hugo">Ox-Hugo</h3>
+
+<p><a href="https://github.com/kaushalmodi/ox-hugo">ox-hugo</a>，這是我覺得可能會比較複雜一點的，不過他的設定很簡單：</p>
+<div class="highlight"><pre class="chroma"><code class="language-elisp" data-lang="elisp"><span class="p">(</span><span class="nb">use-package</span> <span class="nv">ox-hugo</span>
+  <span class="nb">:after</span> <span class="nv">ox</span><span class="p">)</span></code></pre></div>
+<p>比較複雜的是他的文章表示（下面的Org File），因此我也把它加進了Emacs的<a href="https://github.com/joaotavora/yasnippet">yasnippet</a>裡，省的我複製樣板的麻煩，
+ox-hugo的作用是把 📖 Org file轉換成 🗒 Markdown file，因為Hugo在Org上有些問題，所以變成這樣使用可以不必踩那些坑，
+不過你就得先踩Emacs這個大坑 (</p>
+<div class="highlight"><pre class="chroma"><code class="language-org" data-lang="org"><span class="cs">#+HUGO_BASE_DIR</span><span class="c">: ../</span>
+<span class="cs">#+HUGO_SECTION</span><span class="c">: ../content/blog/</span>
+<span class="cs">#+HUGO_WEIGHT</span><span class="c">: auto</span>
+<span class="cs">#+HUGO_AUTO_SET_LASTMOD</span><span class="c">: t</span>
+<span class="gh">*</span><span class="gs"> AnyName                                                            </span><span class="ge"> :@category:</span>
+  The AnyName does not affect the website, so you can set it to any name you like.
+  All posts in here will have the category set to <span class="ge">/category/</span>
+  and you need type C-c C-s on this title block to generate publishedDate
+<span class="gu">**</span><span class="err"> TODO</span> Title                                                         :tag1:tag2:
+<span class="c">   :PROPERTIES:
+</span><span class="c"></span><span class="cs">   :EXPORT_FILE_NAME: your_filename
+</span><span class="cs">   :EXPORT_HUGO_CUSTOM_FRONT_MATTER: :comments true
+</span><span class="cs"></span><span class="c">   :END:</span>
+   Abstract
+<span class="cs">#+hugo</span><span class="c">: more</span>
+<span class="gu">***</span> First headline here
+	Content
+
+<span class="gh">*</span><span class="gs"> Footnotes</span>
+<span class="gh">*</span><span class="ni"> COMMENT</span><span class="gs"> Local Variables                          :ARCHIVE:</span>
+  <span class="c"># Local Variables:</span>
+  <span class="c"># eavl: (org-hugo-auto-export-mode)</span>
+<span class="c"># End:</span></code></pre></div>
+<p>作法是在主目錄下除了content以外，再多新增一個目錄叫做content-org(其他名子也可以)
+然後再新增一個Org file <code>template.org</code> ，並複製上面那個我放在gist的內容進去。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell">$ mkdir content-org
+$ touch content-org/template.org</code></pre></div>
+<p>之後就依照上面那個範本進行寫作，像是你轉換過後的Markdown File要去哪裡、他的檔名又是什麼之類的，其中有幾點要注意的是</p>
+
+<ol>
+<li><p>在 <code>TODO Title</code> 那個Block內敲下 <code>C-c C-s</code> ，可以標注PublishedDate，這是一定要標的！</p></li>
+
+<li><p>在 <code>TODO Title</code> 那個Block內敲下 <code>C-c C-e H H</code> 會把這份文件轉換成Markdown，並以 your_filename.md 寫進 <code>content/blog/</code> 目錄內</p></li>
+
+<li><p>或者是利用上面內容中最下面的 eval: (org-hugo-auto-export-mode) 讓存檔時就自動轉換過去</p></li>
+
+<li><p>把 <strong><span style="color: red"> TODO</span></strong> 刪掉後則對應在Markdown就是 <code>Draft: false</code> ，當然，改成 <strong><span style="color: green"> DONE</span></strong> 也有同樣效果</p></li>
+</ol>
+
+<p>這樣用ox-hugo寫文章有什麼優點？</p>
+
+<ol>
+<li><p>可以用Org 😁</p></li>
+
+<li><p>在同一個文件裡，其實可以寫成一系列的文章，而不用再建立的文件，前後對照速度也就會快很多</p>
+
+<style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
+
+<div class="org-center">
+  <div></div>
+
+<p><img style="border-radius: 8px;" src="/img/hugo-is-awesome/04.png"  /></p>
+
+<p></div></p></li>
+</ol>
+
+<h2 id="fin">Fin</h2>
+
+<p>於是這就會是我用Hugo寫文章時的Emacs ✨ ~</p>
+
+<style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
+
+<div class="org-center">
+  <div></div>
+
+<p><img style="border-radius: 8px;" src="/img/hugo-is-awesome/03.png"  /></p>
+
+<p></div></p>
+
+<style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
+
+<div class="org-center">
+  <div></div>
+
+<p>之後會不會有需要再補充新的內容就隨緣了，因為現在我覺得已經很夠用了ヾ(●゜▽゜●)</p>
+
+<p></div></p>
+  </section>
+
+  <section>
+    
+    <script src="https://utteranc.es/client.js"
+	repo="rniczh/rniczh.github.io"
+	issue-term="pathname"
+	label="✨"
+	theme="github-light"
+	crossorigin="anonymous"
+	async>
+    </script>
+    
+  </section>
+</article>
+
+      </div>
+
+      <div id="side" class="pr-1 bg-white">
+	<aside class="pr-3">
+	  
+    
+    <div id="toc" class="Box Box--blue mb-3">
+      <b>Hugo is Awesome</b>
+      <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#hugo-theme">Hugo + Theme</a>
+<ul>
+<li><a href="#install-hugo">Install Hugo</a></li>
+<li><a href="#setup-theme">Setup Theme</a></li>
+<li><a href="#preview-blog">Preview Blog</a></li>
+</ul></li>
+<li><a href="#hugo-config">Hugo Config</a></li>
+<li><a href="#emacs-config">Emacs Config</a>
+<ul>
+<li><a href="#easy-hugo">Easy-Hugo</a></li>
+<li><a href="#ox-hugo">Ox-Hugo</a></li>
+</ul></li>
+<li><a href="#fin">Fin</a></li>
+</ul></li>
+</ul>
+</nav>
+    </div>
+
+
+
+  
+  
+    <div>
+	
+	  <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+	
+
+	
+	  <iframe src="https://www.facebook.com/plugins/share_button.php?href=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&layout=button&size=small&mobile_iframe=true&width=61&height=20&appId" width="61" height="20" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true" allow="encrypted-media"></iframe>
+	
+
+	
+
+	
+
+      </div>
+  
+
+
+
+	</aside>
+      </div>
+
+      <div id="footer" class="pt-2 pb-3 bg-white text-center">
+	
+
+  <span class="text-small text-gray">
+
+
+    &copy; H.-S. Zheng 2019 &middot; 
+
+    
+
+    &nbsp; and
+&nbsp; <a class="p" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en">(CC BY-NC-SA 4.0) License</a>
+
+
+  </span>
+
+
+      </div>
+    </div>
+
+
+    
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({ tex2jax: { inlineMath: [['$','$'], ['\\(','\\)']] } });</script>
+  </body>
+</html>
