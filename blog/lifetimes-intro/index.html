@@ -129,7 +129,7 @@ neither 2015 edition nor the new Borrow checker will be applied in the furture1.
   
   <section class="pb-6 mb-3 border-bottom">
     <p>The Lifetimes in this post is based on the 2018 edition,
-neither 2015 edition nor the new Borrow checker will be applied in the furture<sub><a href="#org16d3eed">1</a></sub>.</p>
+neither 2015 edition nor the new Borrow checker will be applied in the furture<sub><a href="#orgb579f38">1</a></sub>.</p>
 
 <p>In fact, you can just go to read the <a href="https://github.com/rust-lang/rfcs/blob/master/text/2094-nll.md">RFC</a> to understand how the borrowck work currently.
 And in this post, I want to describe the Lifetimes in a different way that what I&rsquo;m learned
@@ -147,7 +147,7 @@ Cat system workshop and Rust taiwan meetup, you can find these two presentation 
 <p>The whole borrowck can divided into these four steps.</p>
 
 <ol>
-<li>Building Liveness<sub><a href="#orgc1f3912">2</a></sub></li>
+<li>Building Liveness<sub><a href="#orgac7d566">2</a></sub></li>
 <li>Solving Constraints</li>
 <li>Compute Loans in Scope</li>
 <li>Check actions and report errors</li>
@@ -171,7 +171,7 @@ then we can get some fact from this borrow expression:</p>
 
 <ul>
 <li>Generate a Region <code>'1</code> (region variable).</li>
-<li>Create a Constraints: <code>('1 : '0) @ P</code>. A Subtyping relation<sub><a href="#orgf0bcf69">3</a></sub> with location(program point) information;
+<li>Create a Constraints: <code>('1 : '0) @ P</code>. A Subtyping relation<sub><a href="#orgfbfada1">3</a></sub> with location(program point) information;
 It&rsquo;s mean the region <code>'1</code> must include all points in <code>'0</code> which are rechable from location \(P\).</li>
 </ul>
 
@@ -200,7 +200,7 @@ computed in the first two steps in borrowck).</p>
 <h3 id="data-flow-analysis">Data Flow Analysis</h3>
 
 <p>The process of building liveness in the first step and determine which Loans are live at which points
-in the third step, are actually the data flow problems<sub><a href="#orgac3c46a">4</a></sub>.</p>
+in the third step, are actually the data flow problems<sub><a href="#org4cd4dc5">4</a></sub>.</p>
 
 <style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
 
@@ -243,7 +243,7 @@ Figure 1, we can formulate it with</p>
 
 <p>The result of \(Out[s]\) is { \(In[s]\) substract the \(kill_s\) set and then union with the \(gen_s\) set }.</p>
 
-<p>And it will be implemented in a fixed-point iteratiion alogrithm; That&rsquo;s mean, it will try to recompute it,
+<p>And it will be implemented in a fixed-point iteration alogrithm; That&rsquo;s mean, it will try to recompute it,
 until the whole states are fixed. In other words, the \(In[s], \, \forall s \in domain\,V\)
 will not changed anymore.</p>
 
@@ -440,7 +440,7 @@ Some other examples I present in this <a href="https://github.com/rniczh/slides/
 </div>
 
 <p>You may wondering why the line-11 will invalidate the L1, that because L1 is just the fact of Borrow expression
-at line-2, what is it mutable borrow are <code>(*list).value, (*list), list</code> by Supporting Prefixes<sub><a href="#org2826bab">5</a></sub>. So you
+at line-2, what is it mutable borrow are <code>(*list).value, (*list), list</code> by Supporting Prefixes<sub><a href="#org60d6a5a">5</a></sub>. So you
 can not immutable borrow `list` at line-11.</p>
 
 <p>However, the following code can be allowed by the Compiler, and the reason is quite intuitive.</p>
@@ -484,17 +484,17 @@ can not immutable borrow `list` at line-11.</p>
 <h2 id="reference">Reference</h2>
 
 <ol>
-<li><a id="org16d3eed"></a>
+<li><a id="orgb579f38"></a>
 The new Borrowck called Polonius; use <code>RUSTFLAGS=-Zpolonius cargo +nightly run</code> to play this new design.</li>
-<li><a id="orgc1f3912"></a>
+<li><a id="orgac7d566"></a>
 Liveness analysis; Also called live variable analysis, mostly used before register allocation in compiler, <a href="https://en.wikipedia.org/wiki/Live%5Fvariable%5Fanalysis">wiki</a>.</li>
-<li><a id="orgf0bcf69"></a>
+<li><a id="orgfbfada1"></a>
 Subtyping relation. <a href="https://doc.rust-lang.org/nomicon/subtyping.html">https://doc.rust-lang.org/nomicon/subtyping.html</a>, the outlive relation between
 lifetimes, but it will become subset relation in the furture(Polonius).</li>
-<li><a id="orgac3c46a"></a>
+<li><a id="org4cd4dc5"></a>
 Data Flow Analysis; The details of this technique can be found in chapter 9 of
 Compilers : principles, techniques, and tool(2nd), <a href="https://en.wikipedia.org/wiki/Data-flow%5Fanalysis">wiki</a>.</li>
-<li><a id="org2826bab"></a>
+<li><a id="org60d6a5a"></a>
 Supporting Prefixes; <a href="https://github.com/rust-lang/rfcs/blob/master/text/2094-nll.md#reborrow-constraints">https://github.com/rust-lang/rfcs/blob/master/text/2094-nll.md#reborrow-constraints</a></li>
 </ol>
   </section>
