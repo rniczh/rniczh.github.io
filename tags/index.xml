@@ -7,13 +7,40 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; H.-S. Zheng 2019</copyright>
-    <lastBuildDate>Fri, 03 May 2019 00:00:00 +0800</lastBuildDate>
+    <lastBuildDate>Wed, 05 Jun 2019 00:00:00 +0800</lastBuildDate>
     
 	<atom:link href="https://rniczh.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>Blog</title>
+      <title>lifetimes</title>
+      <link>https://rniczh.github.io/tags/lifetimes/</link>
+      <pubDate>Wed, 05 Jun 2019 00:00:00 +0800</pubDate>
+      
+      <guid>https://rniczh.github.io/tags/lifetimes/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>nll</title>
+      <link>https://rniczh.github.io/tags/nll/</link>
+      <pubDate>Wed, 05 Jun 2019 00:00:00 +0800</pubDate>
+      
+      <guid>https://rniczh.github.io/tags/nll/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>rust</title>
+      <link>https://rniczh.github.io/tags/rust/</link>
+      <pubDate>Wed, 05 Jun 2019 00:00:00 +0800</pubDate>
+      
+      <guid>https://rniczh.github.io/tags/rust/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>blog</title>
       <link>https://rniczh.github.io/tags/blog/</link>
       <pubDate>Fri, 03 May 2019 00:00:00 +0800</pubDate>
       
@@ -22,7 +49,7 @@
     </item>
     
     <item>
-      <title>Emacs</title>
+      <title>emacs</title>
       <link>https://rniczh.github.io/tags/emacs/</link>
       <pubDate>Fri, 03 May 2019 00:00:00 +0800</pubDate>
       
@@ -31,7 +58,7 @@
     </item>
     
     <item>
-      <title>Hugo</title>
+      <title>hugo</title>
       <link>https://rniczh.github.io/tags/hugo/</link>
       <pubDate>Fri, 03 May 2019 00:00:00 +0800</pubDate>
       

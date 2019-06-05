@@ -3,18 +3,48 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://rniczh.github.io/blog/lifetimes-intro/</loc>
+    <lastmod>2019-06-05T16:43:31+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://rniczh.github.io/</loc>
-    <lastmod>2019-05-03T14:50:34+08:00</lastmod>
+    <lastmod>2019-06-05T16:15:33+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://rniczh.github.io/blog/hugo-is-awesome/</loc>
-    <lastmod>2019-05-03T17:09:04+08:00</lastmod>
+    <loc>https://rniczh.github.io/categories/</loc>
+    <lastmod>2019-06-05T16:43:31+08:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://rniczh.github.io/tags/blog/</loc>
-    <lastmod>2019-05-03T17:09:04+08:00</lastmod>
+    <loc>https://rniczh.github.io/categories/rust/</loc>
+    <lastmod>2019-06-05T16:43:31+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://rniczh.github.io/tags/</loc>
+    <lastmod>2019-06-05T16:43:31+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://rniczh.github.io/tags/lifetimes/</loc>
+    <lastmod>2019-06-05T16:43:31+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://rniczh.github.io/tags/nll/</loc>
+    <lastmod>2019-06-05T16:43:31+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://rniczh.github.io/tags/rust/</loc>
+    <lastmod>2019-06-05T16:43:31+08:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -25,12 +55,12 @@
   </url>
   
   <url>
-    <loc>https://rniczh.github.io/blog/</loc>
-    <lastmod>2019-04-29T18:25:38+08:00</lastmod>
+    <loc>https://rniczh.github.io/blog/hugo-is-awesome/</loc>
+    <lastmod>2019-05-03T17:09:04+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://rniczh.github.io/categories/</loc>
+    <loc>https://rniczh.github.io/tags/blog/</loc>
     <lastmod>2019-05-03T17:09:04+08:00</lastmod>
     <priority>0</priority>
   </url>
@@ -48,9 +78,8 @@
   </url>
   
   <url>
-    <loc>https://rniczh.github.io/tags/</loc>
-    <lastmod>2019-05-03T17:09:04+08:00</lastmod>
-    <priority>0</priority>
+    <loc>https://rniczh.github.io/blog/</loc>
+    <lastmod>2019-04-29T18:25:38+08:00</lastmod>
   </url>
   
 </urlset>

@@ -7,10 +7,20 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; H.-S. Zheng 2019</copyright>
-    <lastBuildDate>Fri, 03 May 2019 14:50:34 +0800</lastBuildDate>
+    <lastBuildDate>Wed, 05 Jun 2019 16:15:33 +0800</lastBuildDate>
     
 	<atom:link href="https://rniczh.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Understanding Lifetimes</title>
+      <link>https://rniczh.github.io/blog/lifetimes-intro/</link>
+      <pubDate>Wed, 05 Jun 2019 00:00:00 +0800</pubDate>
+      
+      <guid>https://rniczh.github.io/blog/lifetimes-intro/</guid>
+      <description>&lt;p&gt;The Lifetimes in this post is based on the 2018 edition,
+neither 2015 edition nor the new Borrow checker will be applied in the furture&lt;sub&gt;&lt;a href=&#34;#org9356b0c&#34;&gt;1&lt;/a&gt;&lt;/sub&gt;.&lt;/p&gt;</description>
+    </item>
     
     <item>
       <title>Hugo is Awesome</title>

@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+    
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>
+      
+  Understanding Lifetimes &ndash; &lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿
+
+    </title>
+    
+    
+    <meta name="description" property="og:description" content="The Lifetimes in this post is based on the 2018 edition, neither 2015 edition nor the new Borrow checker will be applied in the furture1.
+|Meow ~">
+    
+
+    <meta name="apple-mobile-web-app-title" content="&lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿">
+    
+    
+    <link rel="icon" href="/favicon-64.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="mask-icon" size="any" href="/pinned-icon.svg">
+    
+    
+    
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:site" content="@cinr4">
+    <meta name="twitter:creator" content="@cinr4">
+    <meta name="twitter:title" content="Understanding Lifetimes | &lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿">
+    <meta name="twitter:description" content="The Lifetimes in this post is based on the 2018 edition,
+neither 2015 edition nor the new Borrow checker will be applied in the furture1.|Meow ~">
+    <meta name="twitter:image" content="https://rniczh.github.io/img/twitter-card.png">
+    
+
+
+    <link rel="stylesheet" href="/assets/syntax.css">
+    <link rel="stylesheet" href="/assets/primer-build.css">
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+    <link rel="stylesheet" href="/assets/style.css">
+  </head>
+
+
+  <body class="bg-gray">
+    <div id="holy" class="container-lg bg-white h-100">
+
+      <div id="header" class="px-1 bg-white">
+	<link rel="shortcut icon" href="/favicon.ico">
+<nav class="UnderlineNav UnderlineNav--right px-2">
+  <a class="UnderlineNav-actions muted-link h2" href="https://rniczh.github.io">
+    &lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿
+  </a>
+
+  
+  
+  <div class="UnderlineNav-body">
+    
+    
+    <a class="UnderlineNav-item " href="/blog/">
+      
+      <span>Blog</span>
+    </a>
+    
+    
+    
+    <a class="UnderlineNav-item " href="/">
+      
+      <span>Info</span>
+    </a>
+    
+    
+  </div>
+  
+</nav>
+
+      </div>
+
+      <div role="main" id="main" class="holy-main markdown-body px-4 bg-white">
+	
+
+
+
+
+
+
+
+<br/>
+<div class="Subhead"  style="background-color: #dbebff; border-radius: 10px;  border:20px #dbebff solid;">
+  <div class="Subhead-heading">
+    <div class="h1 mt-3 mb-1">Understanding Lifetimes</div>
+  </div>
+  <div class="Subhead-description">
+    
+
+<a style="text-decoration: none;" href='/categories/rust' class="muted-link">
+  <span class="Label Label--gray-darker">Rust</span>
+</a>
+
+
+
+<a style="text-decoration: none;" href='/tags/rust' class="muted-link">
+  <span class="Label Label--gray">rust</span>
+</a>
+
+<a style="text-decoration: none;" href='/tags/lifetimes' class="muted-link">
+  <span class="Label Label--gray">lifetimes</span>
+</a>
+
+<a style="text-decoration: none;" href='/tags/nll' class="muted-link">
+  <span class="Label Label--gray">nll</span>
+</a>
+
+
+
+    
+    <div class="float-md-right">
+      <span title="Lastmod: 2019-06-05. Published at: 2019-06-05.">
+	
+	  Published: 2019-06-05
+	
+      </span>
+    </div>
+    
+  </div>
+</div>
+<article>
+  
+  <section class="pb-6 mb-3 border-bottom">
+    <p>The Lifetimes in this post is based on the 2018 edition,
+neither 2015 edition nor the new Borrow checker will be applied in the furture<sub><a href="#org9356b0c">1</a></sub>.</p>
+
+<p>In fact, you can just go to read the <a href="https://github.com/rust-lang/rfcs/blob/master/text/2094-nll.md">RFC</a> to understand how the borrowck work currently.
+And in this post, I want to describe the Lifetimes in a different way that what I&rsquo;m learned
+from the RFC.</p>
+
+<p><strong><span style="color: green"> Audience</span></strong>: You may already have read the <strong>Rust Book</strong>. Nice if you took a compiler course.</p>
+
+<blockquote>
+<p>By the way, I have speaked on this topic in two meetups;
+Cat system workshop and Rust taiwan meetup, you can find these two presentation at <a href="https://rniczh.github.io/slides/How-NLL-make-life-easier/#1">slide1</a> and <a href="https://github.com/rniczh/slides/blob/gh-pages/Lifetimes-intro/lifetimes-intro.pdf">slide2</a>, respectively.</p>
+</blockquote>
+
+<h2 id="overview-of-borrow-checker">Overview of Borrow checker</h2>
+
+<p>The whole borrowck can divided into these four steps.</p>
+
+<ol>
+<li>Building Liveness<sub><a href="#org769741b">2</a></sub></li>
+<li>Solving Constraints</li>
+<li>Compute Loans in Scope</li>
+<li>Check actions and report errors</li>
+</ol>
+
+<p>In the first two steps, it will compute the Lifetimes.
+Then bring this information to construct the Loan and compute which Loans
+are live at which points in CFG in the third step.
+In the forth, it will traverse through the CFG to check whether each action is legal or not, just
+depend on the Loans we computed before, but this step is not mentioned in this post,
+you can read it in <a href="https://github.com/rust-lang/rfcs/blob/master/text/2094-nll.md#borrow-checker-phase-2-reporting-errors">Reporting Erros in RFC</a>, however, it&rsquo;s quite intuitive for us.</p>
+
+<p>Before continuing, I need to bring some background knowledge in advance.</p>
+
+<h3 id="lifetimes--often-called-regions">Lifetimes (often called Regions)</h3>
+
+<p>A Lifetimes is a set of program points on CFG(Control Flow Graph).</p>
+
+<p>For instance, the <code>let r:&amp;i32 = &amp;x;</code> can be expanded to <code>let r: &amp;'0 i32 = &amp;'1 x;</code> by the compiler,
+then we can get some fact from this borrow expression:</p>
+
+<ul>
+<li>Generate a Region <code>'1</code> (region variable).</li>
+<li>Create a Constraints: <code>('1 : '0) @ P</code>. A Subtyping relation<sub><a href="#orga182275">3</a></sub> with location(program point) information;
+It&rsquo;s mean the region <code>'1</code> must include all points in <code>'0</code> which are rechable from location \(P\).</li>
+</ul>
+
+<p>The reason why it&rsquo;s just generate a region is because you should decompose this borrow expression into the two statements.
+One is declarative of <code>r</code>, and another is an assignment.</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#007020;font-weight:bold">let</span><span style="color:#bbb"> </span>r: <span style="color:#007020">&amp;</span><span style="">&#39;</span><span style="color:#40a070">0</span><span style="color:#bbb"> </span><span style="color:#902000">i32</span>;<span style="color:#bbb">
+</span><span style="color:#bbb"></span>r<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#666">&amp;</span><span style="">&#39;</span><span style="color:#40a070">1</span><span style="color:#bbb"> </span>x;<span style="color:#bbb">
+</span></code></pre></div>
+<h3 id="borrow">Borrow</h3>
+
+<p>Each Borrow expression is corresponding to a <strong>Loan</strong> which is a struct for
+recording some information about this borrow.</p>
+
+<p>Such like <code>p = &amp;foo;</code> may create a Loan as shown below.</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust">Loan<span style="color:#bbb"> </span>L0<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb">   </span>point: <span style="color:#0e84b5;font-weight:bold">A</span><span style="color:#666">/</span><span style="color:#40a070">0</span><span style="color:#bbb">
+</span><span style="color:#bbb">   </span>path: {<span style="color:#bbb"> </span>foo<span style="color:#bbb"> </span>},<span style="color:#bbb">
+</span><span style="color:#bbb">   </span>kind: <span style="color:#0e84b5;font-weight:bold">shared</span><span style="color:#bbb">
+</span><span style="color:#bbb">   </span>region: <span style="">&#39;</span><span style="color:#40a070">1</span><span style="color:#bbb"> </span>{<span style="color:#bbb"> </span>A<span style="color:#666">/</span><span style="color:#40a070">1</span>,<span style="color:#bbb"> </span>B<span style="color:#666">/</span><span style="color:#40a070">0</span>,<span style="color:#bbb"> </span>C<span style="color:#666">/</span><span style="color:#40a070">0</span><span style="color:#bbb"> </span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span></code></pre></div>
+<p>That&rsquo;s mean a borrow expression happen at <code>A/0</code> (the 0th statement of Basic Block A), <code>foo</code> is borrowed, create
+a shared reference tagged with a Lifetimes <code>'1</code> (a set of program points
+computed in the first two steps in borrowck).</p>
+
+<h3 id="data-flow-analysis">Data Flow Analysis</h3>
+
+<p>The process of building liveness in the first step and determine which Loans are live at which points
+in the third step, are actually the data flow problems<sub><a href="#org2f2286d">4</a></sub>.</p>
+
+<style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
+
+<div class="org-center">
+  <div></div>
+
+<figure>
+    <img src="/img/lifetimes-intro/data-flow.png"
+         alt="Figure 1: data-flow" width="250px"/> <figcaption>
+            <p>Figure 1: data-flow</p>
+        </figcaption>
+</figure>
+
+
+<p></div></p>
+
+<p>The Data flow problem come into two flavors: forward or backward direction. Take forward as an exmaple, in
+Figure 1, we can formulate it with</p>
+
+<style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
+
+<div class="org-center">
+  <div></div>
+
+<p>\(Out[s] = gen_s \, \cup \, ( \, In[s] \, \cap \, \overline {kill_s}  \,)\)</p>
+
+<p></div></p>
+
+<h4 id="definition">Definition</h4>
+
+<ul>
+<li>Input of node <code>s</code>: \(In[s]\).</li>
+<li>Output: \(Out[s]\).</li>
+<li>Transfer function: \(gen\) and \(kill\).</li>
+</ul>
+
+<p>If <code>p</code> is a predecessors of <code>s</code>, then \(Out[p] = In[s]\)</p>
+
+<h4 id="behavior">Behavior</h4>
+
+<p>The result of \(Out[s]\) is { \(In[s]\) substract the \(kill_s\) set and then union with the \(gen_s\) set }.</p>
+
+<p>And it will be implemented in a fixed-point iteratiion alogrithm; That&rsquo;s mean, it will try to recompute it,
+until the whole states are fixed. In other words, the \(In[s], \, \forall s \in domain\,V\)
+will not changed anymore.</p>
+
+<h2 id="step1-dot-building-liveness">Step1. Building Liveness</h2>
+
+<ul>
+<li>Liveness: a variable \(v\) is live at point \(P\) if there exists a path in CFG from \(P\) to a use of \(v\)
+along which \(v\) is not defined.</li>
+</ul>
+
+<h3 id="liveness-analysis--backward-data-flow-problem">Liveness analysis (Backward data flow problem)</h3>
+
+<hr />
+
+<div class="note">
+  <div></div>
+
+<p>Data flow equation</p>
+
+<p></div></p>
+
+<style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
+
+<div class="org-center">
+  <div></div>
+
+<p>\(Live_{in}[exit]=\emptyset\)</p>
+
+<p>\(Live_{in}[s] = use_s \, \cup \, ( \, Live_{out}[s] \, \cap \, \overline {def_s}  \,)\)</p>
+
+<p>\(Live_{out}[t] = \bigcup_{s \in succ(t)}\, Live_{in}[s]\)</p>
+
+<p></div></p>
+
+<hr />
+
+<p>When we meet a statement like: <code>a = b + c</code>, then \(def_s\) is <code>{ a }</code>, \(use_s\) is <code>{b, c}</code>.
+If the \(Live_{out}[s]\) is <code>{a, d}</code> then</p>
+
+<style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
+
+<div class="org-center">
+  <div></div>
+
+<p>\(Live_{in}[s] = \{\{a, d\} - \{ a \}\} \cup \{b,c\} = \{d, b, c\}\)</p>
+
+<p></div></p>
+
+<p>For the variable <code>b</code>, we can say that <code>b</code> is live at location <code>s</code> (in \(live_{in}[s]\)), but
+not live anymore after the location <code>s</code>. So the liveness of <code>b</code> include points <code>s</code> (\(s \in liveness(b)\)).</p>
+
+<h3 id="note">Note</h3>
+
+<p>But here is a little different is we only compute the liveness of variable if it has a region associated.
+For instance, we only care about the <code>p</code> that assoicated with region <code>'0</code> in the code below. But
+the liveness of variable <code>foo</code> and <code>bar</code> are just doesn&rsquo;t matter.</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#007020;font-weight:bold">let</span><span style="color:#bbb"> </span>foo<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#40a070">10</span>;<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#007020;font-weight:bold">let</span><span style="color:#bbb"> </span>bar<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#40a070">20</span>;<span style="color:#bbb">
+</span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#007020;font-weight:bold">let</span><span style="color:#bbb"> </span>p:<span style="color:#007020">&amp;</span><span style="">&#39;</span><span style="color:#40a070">0</span><span style="color:#bbb"> </span>T;<span style="color:#bbb">
+</span><span style="color:#bbb"></span>p<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#666">&amp;</span><span style="">&#39;</span><span style="color:#40a070">1</span><span style="color:#bbb"> </span>foo;<span style="color:#bbb">
+</span></code></pre></div>
+<p>And the liveness of <code>p</code> will be assigned to region <code>'0</code>. That we say: <code>'0 = liveness(p)</code>.</p>
+
+<h2 id="step2-dot-solving-contraints">Step2. Solving Contraints</h2>
+
+<p>In Step2, we need to sovle the contraints;
+In other words, complete the requirements of constraints. After we sovled the constraints,
+we can get another regions.</p>
+
+<ul>
+<li>Constraints: a form of <code>('a : 'b) @ P</code>; Lifetimes <code>'a</code> must include all points in <code>'b</code>
+<strong>which are rechable from the location \(P\)</strong>.</li>
+</ul>
+
+<p>For instance, in Figure 2, you may already have region <code>'b = {n1, n3, n4}</code> which is computed in Step1,
+and after solved the constraint <code>('a : 'b) @ P</code>, you will get the region <code>'a</code> which is include <code>{n1, n4}</code>.</p>
+
+<style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
+
+<div class="org-center">
+  <div></div>
+
+<figure>
+    <img src="/img/lifetimes-intro/solve-constraints.png"
+         alt="Figure 2: solve constraints" height="250px"/> <figcaption>
+            <p>Figure 2: solve constraints</p>
+        </figcaption>
+</figure>
+
+
+<p></div></p>
+
+<h2 id="step3-dot-compute-loans-in-scope">Step3. Compute Loans in Scope</h2>
+
+<p>Each Borrow expression is corresponding to a <strong>Loan</strong>, that we already talked in <a href="#borrow">Borrow</a>.</p>
+
+<p>Determine which Loans are live at which points is also a data flow problem,
+but unlike the liveness is a backward analysis, it&rsquo;s a forward.</p>
+
+<hr />
+
+<div class="note">
+  <div></div>
+
+<p>Data flow equation</p>
+
+<p></div></p>
+
+<style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
+
+<div class="org-center">
+  <div></div>
+
+<p>\(Loan_{out}[entry]=\emptyset\)</p>
+
+<p>\(Loan_{out}[s] = gen_s \, \cup \, ( \, Loan_{in}[s] \, \cap \, \overline {kill_s}  \,)\)</p>
+
+<p>\(Loan_{in}[s] = \bigcup_{p \in pred(s)}\, Loan_{out}[p]\)</p>
+
+<p></div></p>
+
+<ul>
+<li><p>Transfer functions:</p>
+
+<p>\(gen\) if the statement at location <code>s</code> is a borrow expression.</p>
+
+<p>\(kill\) if the \(LV\) of the assignment is in path (\(LV \in path\)), or the location <code>s</code> in not live here
+(\(s \notin region\)).</p></li>
+</ul>
+
+<hr />
+
+<p>It is like having lots of flyer(Loans) in your hand, you will copy these flyers and
+transfer to the next people. If you encounter a branch, just give them to all branches. The next people will
+check if they should discard some flyers because of the reason above, and then check if they should
+generate a new flyer because they are a borrow expression, and then transfer to the next people again.</p>
+
+<p>Until the whole Loans at each locatoin are fixed, not changed anymore, then the job is completed.</p>
+
+<style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
+
+<div class="org-center">
+  <div></div>
+
+<figure>
+    <img src="/img/lifetimes-intro/transfer.png"
+         alt="Figure 3: Transfer the Loans" height="170px"/> <figcaption>
+            <p>Figure 3: Transfer the Loans</p>
+        </figcaption>
+</figure>
+
+
+<p></div></p>
+
+<h2 id="examples">Examples</h2>
+
+<p>The code below cannot compiled, because even the L1 be killed on the true path of if-branch,
+but it&rsquo;s still live on the other path. So when you borrow the list at line-11, it will invalidate the L1.
+Some other examples I present in this <a href="https://github.com/rniczh/slides/blob/gh-pages/Lifetimes-intro/lifetimes-intro.pdf">slide</a>.</p>
+
+<div class="highlight"><div style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 0
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#007020;font-weight:bold">let</span><span style="color:#bbb"> </span><span style="color:#007020;font-weight:bold">mut</span><span style="color:#bbb"> </span>list: <span style="color:#007020">&amp;</span><span style="color:#0e84b5;font-weight:bold">mut</span><span style="color:#bbb"> </span>List<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#666">&amp;</span><span style="color:#007020;font-weight:bold">mut</span><span style="color:#bbb"> </span>a;<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#60a0b0;font-style:italic">// gen L0
+</span><span style="color:#60a0b0;font-style:italic"></span><span style="color:#007020;font-weight:bold">let</span><span style="color:#bbb"> </span>r<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#666">&amp;</span><span style="color:#007020;font-weight:bold">mut</span><span style="color:#bbb"> </span>(<span style="color:#666">*</span>list).value;<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#60a0b0;font-style:italic">// gen L1
+</span><span style="color:#60a0b0;font-style:italic"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#007020;font-weight:bold">if</span><span style="color:#bbb"> </span>(<span style="color:#666">*</span>list).len<span style="color:#bbb"> </span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#40a070">0</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb">  </span>list<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#666">&amp;</span><span style="color:#007020;font-weight:bold">mut</span><span style="color:#bbb"> </span>b;<span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#60a0b0;font-style:italic">// kill L1
+</span><span style="color:#60a0b0;font-style:italic"></span><span style="color:#bbb">  </span><span style="color:#60a0b0;font-style:italic">// gen L2
+</span><span style="color:#60a0b0;font-style:italic"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#60a0b0;font-style:italic">// L0, L1, L2 are live here
+</span><span style="color:#60a0b0;font-style:italic"></span>println<span style="color:#666">!</span>(<span style="color:#4070a0">&#34;{:?}&#34;</span>,<span style="color:#bbb"> </span>list);<span style="color:#bbb"> </span><span style="color:#60a0b0;font-style:italic">// Invalidate L1
+</span><span style="color:#60a0b0;font-style:italic"></span>println<span style="color:#666">!</span>(<span style="color:#4070a0">&#34;{:?}&#34;</span>,<span style="color:#bbb"> </span>r);<span style="color:#bbb">
+</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>You may wondering why the line-11 will invalidate the L1, that because L1 is just the fact of Borrow expression
+at line-2, what is it mutable borrow are <code>(*list).value, (*list), list</code> by Supporting Prefixes<sub><a href="#org254e06c">5</a></sub>. So you
+can not immutable borrow `list` at line-11.</p>
+
+<p>However, the following code can be allowed by the Compiler, and the reason is quite intuitive.</p>
+
+<div class="highlight"><div style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 0
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#007020;font-weight:bold">let</span><span style="color:#bbb"> </span><span style="color:#007020;font-weight:bold">mut</span><span style="color:#bbb"> </span>list: <span style="color:#007020">&amp;</span><span style="color:#0e84b5;font-weight:bold">mut</span><span style="color:#bbb"> </span>List<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#666">&amp;</span><span style="color:#007020;font-weight:bold">mut</span><span style="color:#bbb"> </span>a;<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#60a0b0;font-style:italic">// gen L0
+</span><span style="color:#60a0b0;font-style:italic"></span><span style="color:#007020;font-weight:bold">let</span><span style="color:#bbb"> </span>r<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#666">&amp;</span><span style="color:#007020;font-weight:bold">mut</span><span style="color:#bbb"> </span>(<span style="color:#666">*</span>list).value;<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#60a0b0;font-style:italic">// gen L1
+</span><span style="color:#60a0b0;font-style:italic"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span>list<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#666">&amp;</span><span style="color:#007020;font-weight:bold">mut</span><span style="color:#bbb"> </span>b;<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#60a0b0;font-style:italic">// kill L1
+</span><span style="color:#60a0b0;font-style:italic">// gen L2
+</span><span style="color:#60a0b0;font-style:italic"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#60a0b0;font-style:italic">// L0, L2 are live here
+</span><span style="color:#60a0b0;font-style:italic"></span>println<span style="color:#666">!</span>(<span style="color:#4070a0">&#34;{:?}&#34;</span>,<span style="color:#bbb"> </span>list);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#60a0b0;font-style:italic">// kill L0 and L2, because these region not include here
+</span><span style="color:#60a0b0;font-style:italic"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span>println<span style="color:#666">!</span>(<span style="color:#4070a0">&#34;{:?}&#34;</span>,<span style="color:#bbb"> </span>r);<span style="color:#bbb">
+</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<h2 id="reference">Reference</h2>
+
+<ol>
+<li><a id="org9356b0c"></a>
+The new Borrowck called Polonius; use <code>RUSTFLAGS=-Zpolonius cargo +nightly run</code> to play this new design.</li>
+<li><a id="org769741b"></a>
+Liveness analysis; Also called live variable analysis, mostly used before register allocation in compiler, <a href="https://en.wikipedia.org/wiki/Live%5Fvariable%5Fanalysis">wiki</a>.</li>
+<li><a id="orga182275"></a>
+Subtyping relation. <a href="https://doc.rust-lang.org/nomicon/subtyping.html">https://doc.rust-lang.org/nomicon/subtyping.html</a>, the outlive relation between
+lifetimes, but it will become subset relation in the furture(Polonius).</li>
+<li><a id="org2f2286d"></a>
+Data Flow Analysis; The details of this technique can be found in chapter 9 of
+Compilers : principles, techniques, and tool(2nd), <a href="https://en.wikipedia.org/wiki/Data-flow%5Fanalysis">wiki</a>.</li>
+<li><a id="org254e06c"></a>
+Supporting Prefixes; <a href="https://github.com/rust-lang/rfcs/blob/master/text/2094-nll.md#reborrow-constraints">https://github.com/rust-lang/rfcs/blob/master/text/2094-nll.md#reborrow-constraints</a></li>
+</ol>
+  </section>
+
+  <section>
+    
+    <script src="https://utteranc.es/client.js"
+	repo="rniczh/rniczh.github.io"
+	issue-term="pathname"
+	label="✨"
+	theme="github-light"
+	crossorigin="anonymous"
+	async>
+    </script>
+    
+  </section>
+</article>
+
+      </div>
+
+      <div id="side" class="pr-1 bg-white">
+	<aside class="pr-3">
+	  
+    
+    <div id="toc" class="Box Box--blue mb-3">
+      <b>Understanding Lifetimes</b>
+      <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#overview-of-borrow-checker">Overview of Borrow checker</a>
+<ul>
+<li><a href="#lifetimes--often-called-regions">Lifetimes (often called Regions)</a></li>
+<li><a href="#borrow">Borrow</a></li>
+<li><a href="#data-flow-analysis">Data Flow Analysis</a>
+<ul>
+<li><a href="#definition">Definition</a></li>
+<li><a href="#behavior">Behavior</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#step1-dot-building-liveness">Step1. Building Liveness</a>
+<ul>
+<li><a href="#liveness-analysis--backward-data-flow-problem">Liveness analysis (Backward data flow problem)</a></li>
+<li><a href="#note">Note</a></li>
+</ul></li>
+<li><a href="#step2-dot-solving-contraints">Step2. Solving Contraints</a></li>
+<li><a href="#step3-dot-compute-loans-in-scope">Step3. Compute Loans in Scope</a></li>
+<li><a href="#examples">Examples</a></li>
+<li><a href="#reference">Reference</a></li>
+</ul></li>
+</ul>
+</nav>
+    </div>
+
+
+
+  
+  
+    <div>
+	
+	  <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+	
+
+	
+	  <iframe src="https://www.facebook.com/plugins/share_button.php?href=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&layout=button&size=small&mobile_iframe=true&width=61&height=20&appId" width="61" height="20" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true" allow="encrypted-media"></iframe>
+	
+
+	
+
+	
+
+      </div>
+  
+
+
+
+	</aside>
+      </div>
+
+      <div id="footer" class="pt-2 pb-3 bg-white text-center">
+	
+
+  <span class="text-small text-gray">
+
+
+    &copy; H.-S. Zheng 2019 &middot; 
+
+    
+
+    <a class="p" href=https://github.com/rniczh> <b>Github</b> </a>
+
+    
+
+    &nbsp; and
+&nbsp; <a class="p" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en">(CC BY-NC-SA 4.0) License</a>
+
+
+  </span>
+
+
+      </div>
+    </div>
+
+
+    
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({ tex2jax: { inlineMath: [['$','$'], ['\\(','\\)']] } });</script>
+  </body>
+</html>

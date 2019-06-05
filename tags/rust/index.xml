@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>rust on &lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿</title>
+    <link>https://rniczh.github.io/tags/rust/</link>
+    <description>Recent content in rust on &lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>&amp;copy; H.-S. Zheng 2019</copyright>
+    <lastBuildDate>Wed, 05 Jun 2019 00:00:00 +0800</lastBuildDate>
+    
+	<atom:link href="https://rniczh.github.io/tags/rust/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Understanding Lifetimes</title>
+      <link>https://rniczh.github.io/blog/lifetimes-intro/</link>
+      <pubDate>Wed, 05 Jun 2019 00:00:00 +0800</pubDate>
+      
+      <guid>https://rniczh.github.io/blog/lifetimes-intro/</guid>
+      <description>&lt;p&gt;The Lifetimes in this post is based on the 2018 edition,
+neither 2015 edition nor the new Borrow checker will be applied in the furture&lt;sub&gt;&lt;a href=&#34;#org9356b0c&#34;&gt;1&lt;/a&gt;&lt;/sub&gt;.&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -150,7 +150,7 @@
 <h3 id="install-hugo">Install Hugo</h3>
 
 <p>這部份可以看<a href="https://gohugo.io/getting-started">Hugo-Basic-Usage</a>了解，因為我是用Arch Linux，所以就直接用Pacman安裝就好，安裝好後找一個地方放Blog</p>
-<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell">$ sudo pacman -S hugo
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ sudo pacman -S hugo
 $ hugo new site /path/to/your/blog</code></pre></div>
 <p>然後就可以在那目錄下找到以下內容：</p>
 
@@ -174,16 +174,17 @@ $ hugo new site /path/to/your/blog</code></pre></div>
 
 <ol>
 <li><p>將對方的Theme Clone下來放進你的themes目錄下</p>
-<div class="highlight"><pre class="chroma"><code class="language-shel" data-lang="shel">$ git clone https://github.com/qqhann/hugo-primer.git themes/hugo-primer</code></pre></div></li>
-
-<li><p>將此行設定至 <code>Config.toml</code></p>
-<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="nv">theme</span> <span class="o">=</span> <span class="s2">&#34;hugo-primer&#34;</span></code></pre></div></li>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shel" data-lang="shel">$ git clone https://github.com/qqhann/hugo-primer.git themes/hugo-primer</code></pre></div>
+<ol>
+<li>將此行設定至 <code>Config.toml</code></li>
+</ol>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#bb60d5">theme</span> <span style="color:#666">=</span> <span style="color:#4070a0">&#34;hugo-primer&#34;</span></code></pre></div></li>
 </ol>
 
 <h3 id="preview-blog">Preview Blog</h3>
 
 <p>此時就可以嘗試去預覽Blog的情況：</p>
-<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell">$ hugo server -D -F</code></pre></div>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ hugo server -D -F</code></pre></div>
 <p><strong>-D</strong> 代表Draft，在文章中的Params那設定 <code>Draft: true</code> 的文章必須用 <strong>-D</strong> 來顯示，
 這些文章在最後並不會Published上去，除非把它設定為 false。</p>
 
@@ -198,12 +199,13 @@ $ hugo new site /path/to/your/blog</code></pre></div>
 
 <ol>
 <li><p>Paginate 這個變數是決定一頁要有多少文章，預設是10</p>
-<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># Default = 10. This setting can be overridden within the template.</span>
-<span class="c1"># It&#39;s indicate how many posts can be placed in one page</span>
-<span class="c1"># detail: https://gohugo.io/templates/pagination/</span>
-<span class="nv">Paginate</span> <span class="o">=</span> <span class="m">10</span></code></pre></div></li>
-
-<li><p>Menu設定</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#60a0b0;font-style:italic"># Default = 10. This setting can be overridden within the template.</span>
+<span style="color:#60a0b0;font-style:italic"># It&#39;s indicate how many posts can be placed in one page</span>
+<span style="color:#60a0b0;font-style:italic"># detail: https://gohugo.io/templates/pagination/</span>
+<span style="color:#bb60d5">Paginate</span> <span style="color:#666">=</span> <span style="color:#40a070">10</span></code></pre></div>
+<ol>
+<li>Menu設定</li>
+</ol>
 
 <p>那個Theme提供的範例圖片右上角會有一個Menu就是在這裡設定，透過url來指定他在網址的位置，例如我把Info的部份設定到 <code>/</code> 主目錄下，
 所以連到我的Blog <a href="https://rniczh.github.io/">https://rniczh.github.io/</a> 會看到的是我的個人介紹，而 <code>/blog/</code> 則是Blog的文章列表，
@@ -214,20 +216,20 @@ $ hugo new site /path/to/your/blog</code></pre></div>
 
 <li><p>相同地，新增 <code>content/blog/_index.md</code> 建立的就是 url: <code>/blog/</code> 下的頁面</p></li>
 </ul>
-<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">[[</span>menu.main<span class="o">]]</span>
-  <span class="nv">identifier</span> <span class="o">=</span> <span class="s2">&#34;blog&#34;</span>
-  <span class="nv">name</span> <span class="o">=</span> <span class="s2">&#34;Blog&#34;</span>
-  <span class="nv">title</span> <span class="o">=</span> <span class="s2">&#34;blog section&#34;</span>
-  <span class="nv">url</span> <span class="o">=</span> <span class="s2">&#34;/blog/&#34;</span>
-  <span class="c1"># weight is indicate the display order in menu</span>
-  <span class="nv">weight</span> <span class="o">=</span> -100
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#666">[[</span>menu.main<span style="color:#666">]]</span>
+  <span style="color:#bb60d5">identifier</span> <span style="color:#666">=</span> <span style="color:#4070a0">&#34;blog&#34;</span>
+  <span style="color:#bb60d5">name</span> <span style="color:#666">=</span> <span style="color:#4070a0">&#34;Blog&#34;</span>
+  <span style="color:#bb60d5">title</span> <span style="color:#666">=</span> <span style="color:#4070a0">&#34;blog section&#34;</span>
+  <span style="color:#bb60d5">url</span> <span style="color:#666">=</span> <span style="color:#4070a0">&#34;/blog/&#34;</span>
+  <span style="color:#60a0b0;font-style:italic"># weight is indicate the display order in menu</span>
+  <span style="color:#bb60d5">weight</span> <span style="color:#666">=</span> -100
 
-<span class="o">[[</span>menu.main<span class="o">]]</span>
-  <span class="nv">identifier</span> <span class="o">=</span> <span class="s2">&#34;info&#34;</span>
-  <span class="nv">name</span> <span class="o">=</span> <span class="s2">&#34;Info&#34;</span>
-  <span class="nv">title</span> <span class="o">=</span> <span class="s2">&#34;info section&#34;</span>
-  <span class="nv">url</span> <span class="o">=</span> <span class="s2">&#34;/&#34;</span>
-  <span class="nv">weight</span> <span class="o">=</span> <span class="m">50</span></code></pre></div>
+<span style="color:#666">[[</span>menu.main<span style="color:#666">]]</span>
+  <span style="color:#bb60d5">identifier</span> <span style="color:#666">=</span> <span style="color:#4070a0">&#34;info&#34;</span>
+  <span style="color:#bb60d5">name</span> <span style="color:#666">=</span> <span style="color:#4070a0">&#34;Info&#34;</span>
+  <span style="color:#bb60d5">title</span> <span style="color:#666">=</span> <span style="color:#4070a0">&#34;info section&#34;</span>
+  <span style="color:#bb60d5">url</span> <span style="color:#666">=</span> <span style="color:#4070a0">&#34;/&#34;</span>
+  <span style="color:#bb60d5">weight</span> <span style="color:#666">=</span> <span style="color:#40a070">50</span></code></pre></div>
 <style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
 
 <div class="org-center">
@@ -273,15 +275,15 @@ $ hugo new site /path/to/your/blog</code></pre></div>
 <p><a href="https://github.com/masasam/emacs-easy-hugo">easy-hugo</a>我只是拿來管理文章而已，例如確認哪些目前是Draft的情形等等之類的，實際上發布或者預覽都是用shell上的hugo指令完成。</p>
 
 <p>而easy-hugo設定舉 github.io 為例：</p>
-<div class="highlight"><pre class="chroma"><code class="language-elisp" data-lang="elisp"><span class="p">(</span><span class="nb">use-package</span> <span class="nv">easy-hugo</span>
-  <span class="nb">:config</span>
-  <span class="p">(</span><span class="nb">setq</span> <span class="nv">easy-hugo-basedir</span> <span class="s">&#34;path/to/your/blog&#34;</span><span class="p">)</span>
-  <span class="p">(</span><span class="nb">setq</span> <span class="nv">easy-hugo-url</span> <span class="s">&#34;https://yourname.github.io&#34;</span><span class="p">)</span>
-  <span class="p">(</span><span class="nb">setq</span> <span class="nv">easy-hugo-postdir</span> <span class="s">&#34;content/blog/&#34;</span><span class="p">)</span>
-  <span class="p">(</span><span class="nb">setq</span> <span class="nv">easy-hugo-sshdomain</span> <span class="s">&#34;yourname.github.io&#34;</span><span class="p">)</span>
-  <span class="p">(</span><span class="nb">setq</span> <span class="nv">easy-hugo-root</span> <span class="s">&#34;/home/rnic/Project/githubio/hugoroot/&#34;</span><span class="p">)</span>
-  <span class="p">(</span><span class="nb">setq</span> <span class="nv">easy-hugo-previewtime</span> <span class="s">&#34;300&#34;</span><span class="p">)</span>
-<span class="p">)</span></code></pre></div>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-elisp" data-lang="elisp">(<span style="color:#007020">use-package</span> <span style="color:#bb60d5">easy-hugo</span>
+  <span style="color:#007020">:config</span>
+  (<span style="color:#007020">setq</span> <span style="color:#bb60d5">easy-hugo-basedir</span> <span style="color:#4070a0">&#34;path/to/your/blog&#34;</span>)
+  (<span style="color:#007020">setq</span> <span style="color:#bb60d5">easy-hugo-url</span> <span style="color:#4070a0">&#34;https://yourname.github.io&#34;</span>)
+  (<span style="color:#007020">setq</span> <span style="color:#bb60d5">easy-hugo-postdir</span> <span style="color:#4070a0">&#34;content/blog/&#34;</span>)
+  (<span style="color:#007020">setq</span> <span style="color:#bb60d5">easy-hugo-sshdomain</span> <span style="color:#4070a0">&#34;yourname.github.io&#34;</span>)
+  (<span style="color:#007020">setq</span> <span style="color:#bb60d5">easy-hugo-root</span> <span style="color:#4070a0">&#34;/home/rnic/Project/githubio/hugoroot/&#34;</span>)
+  (<span style="color:#007020">setq</span> <span style="color:#bb60d5">easy-hugo-previewtime</span> <span style="color:#4070a0">&#34;300&#34;</span>)
+)</code></pre></div>
 <style>.org-center { margin-left: auto; margin-right: auto; text-align: center; }</style>
 
 <div class="org-center">
@@ -299,37 +301,37 @@ $ hugo new site /path/to/your/blog</code></pre></div>
 <h3 id="ox-hugo">Ox-Hugo</h3>
 
 <p><a href="https://github.com/kaushalmodi/ox-hugo">ox-hugo</a>，這是我覺得可能會比較複雜一點的，不過他的設定很簡單：</p>
-<div class="highlight"><pre class="chroma"><code class="language-elisp" data-lang="elisp"><span class="p">(</span><span class="nb">use-package</span> <span class="nv">ox-hugo</span>
-  <span class="nb">:after</span> <span class="nv">ox</span><span class="p">)</span></code></pre></div>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-elisp" data-lang="elisp">(<span style="color:#007020">use-package</span> <span style="color:#bb60d5">ox-hugo</span>
+  <span style="color:#007020">:after</span> <span style="color:#bb60d5">ox</span>)</code></pre></div>
 <p>比較複雜的是他的文章表示（下面的Org File），因此我也把它加進了Emacs的<a href="https://github.com/joaotavora/yasnippet">yasnippet</a>裡，省的我複製樣板的麻煩，
 ox-hugo的作用是把 📖 Org file轉換成 🗒 Markdown file，因為Hugo在Org上有些問題，所以變成這樣使用可以不必踩那些坑，
 不過你就得先踩Emacs這個大坑 (</p>
-<div class="highlight"><pre class="chroma"><code class="language-org" data-lang="org"><span class="cs">#+HUGO_BASE_DIR</span><span class="c">: ../</span>
-<span class="cs">#+HUGO_SECTION</span><span class="c">: ../content/blog/</span>
-<span class="cs">#+HUGO_WEIGHT</span><span class="c">: auto</span>
-<span class="cs">#+HUGO_AUTO_SET_LASTMOD</span><span class="c">: t</span>
-<span class="gh">*</span><span class="gs"> AnyName                                                            </span><span class="ge"> :@category:</span>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-org" data-lang="org"><span style="color:#60a0b0;background-color:#fff0f0">#+HUGO_BASE_DIR</span><span style="color:#60a0b0;font-style:italic">: ../</span>
+<span style="color:#60a0b0;background-color:#fff0f0">#+HUGO_SECTION</span><span style="color:#60a0b0;font-style:italic">: ../content/blog/</span>
+<span style="color:#60a0b0;background-color:#fff0f0">#+HUGO_WEIGHT</span><span style="color:#60a0b0;font-style:italic">: auto</span>
+<span style="color:#60a0b0;background-color:#fff0f0">#+HUGO_AUTO_SET_LASTMOD</span><span style="color:#60a0b0;font-style:italic">: t</span>
+<span style="color:#000080;font-weight:bold">*</span><span style="font-weight:bold"> AnyName                                                            </span><span style="font-style:italic"> :@category:</span>
   The AnyName does not affect the website, so you can set it to any name you like.
-  All posts in here will have the category set to <span class="ge">/category/</span>
+  All posts in here will have the category set to <span style="font-style:italic">/category/</span>
   and you need type C-c C-s on this title block to generate publishedDate
-<span class="gu">**</span><span class="err"> TODO</span> Title                                                         :tag1:tag2:
-<span class="c">   :PROPERTIES:
-</span><span class="c"></span><span class="cs">   :EXPORT_FILE_NAME: your_filename
-</span><span class="cs">   :EXPORT_HUGO_CUSTOM_FRONT_MATTER: :comments true
-</span><span class="cs"></span><span class="c">   :END:</span>
+<span style="color:#800080;font-weight:bold">**</span><span style=""> TODO</span> Title                                                         :tag1:tag2:
+<span style="color:#60a0b0;font-style:italic">   :PROPERTIES:
+</span><span style="color:#60a0b0;font-style:italic"></span><span style="color:#60a0b0;background-color:#fff0f0">   :EXPORT_FILE_NAME: your_filename
+</span><span style="color:#60a0b0;background-color:#fff0f0">   :EXPORT_HUGO_CUSTOM_FRONT_MATTER: :comments true
+</span><span style="color:#60a0b0;background-color:#fff0f0"></span><span style="color:#60a0b0;font-style:italic">   :END:</span>
    Abstract
-<span class="cs">#+hugo</span><span class="c">: more</span>
-<span class="gu">***</span> First headline here
+<span style="color:#60a0b0;background-color:#fff0f0">#+hugo</span><span style="color:#60a0b0;font-style:italic">: more</span>
+<span style="color:#800080;font-weight:bold">***</span> First headline here
 	Content
 
-<span class="gh">*</span><span class="gs"> Footnotes</span>
-<span class="gh">*</span><span class="ni"> COMMENT</span><span class="gs"> Local Variables                          :ARCHIVE:</span>
-  <span class="c"># Local Variables:</span>
-  <span class="c"># eavl: (org-hugo-auto-export-mode)</span>
-<span class="c"># End:</span></code></pre></div>
+<span style="color:#000080;font-weight:bold">*</span><span style="font-weight:bold"> Footnotes</span>
+<span style="color:#000080;font-weight:bold">*</span><span style="color:#d55537;font-weight:bold"> COMMENT</span><span style="font-weight:bold"> Local Variables                          :ARCHIVE:</span>
+  <span style="color:#60a0b0;font-style:italic"># Local Variables:</span>
+  <span style="color:#60a0b0;font-style:italic"># eavl: (org-hugo-auto-export-mode)</span>
+<span style="color:#60a0b0;font-style:italic"># End:</span></code></pre></div>
 <p>作法是在主目錄下除了content以外，再多新增一個目錄叫做content-org(其他名子也可以)
 然後再新增一個Org file <code>template.org</code> ，並複製上面那個內容進去。</p>
-<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell">$ mkdir content-org
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ mkdir content-org
 $ touch content-org/template.org</code></pre></div>
 <p>之後就依照上面那個範本進行寫作，像是你轉換過後的Markdown File要去哪裡、他的檔名又是什麼之類的，其中有幾點要注意的是</p>
 
