@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>cpp on &lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿</title>
+    <link>https://rniczh.github.io/tags/cpp/</link>
+    <description>Recent content in cpp on &lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>&amp;copy; H.-S. Zheng 2019</copyright>
+    <lastBuildDate>Wed, 31 Jul 2019 00:00:00 +0800</lastBuildDate>
+    
+	<atom:link href="https://rniczh.github.io/tags/cpp/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>一個簡單的題目 (Reverse Integer)</title>
+      <link>https://rniczh.github.io/blog/code_reverse_integer/</link>
+      <pubDate>Wed, 31 Jul 2019 00:00:00 +0800</pubDate>
+      
+      <guid>https://rniczh.github.io/blog/code_reverse_integer/</guid>
+      <description>&lt;p&gt;故事的起因是因為有個人在論壇上問了這個題目，不過他們在檢查overflow這件事情非常的software&amp;hellip;，那時我就在想，為什麼不用jump if overflow靠硬體計算操作時設定overflow flag解決呢？於是這個點子卡在腦中，很想特別講出來，但又覺得講這種事情很麻煩，所以就簡單寫了這篇。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

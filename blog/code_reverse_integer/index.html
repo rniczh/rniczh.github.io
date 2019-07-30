@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+    
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>
+      
+  一個簡單的題目 (Reverse Integer) &ndash; &lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿
+
+    </title>
+    
+    
+    <meta name="description" property="og:description" content="故事的起因是因為有個人在論壇上問了這個題目，不過他們在檢查overflow這件事情非常的software&amp;hellip;，那時我就在想，為什麼不用jump if overflow靠硬體計算操作時設定overflow flag解決呢？於是這個點子卡在腦中，很想特別講出來，但又覺得講這種事情很麻煩，所以就簡單寫了這篇。
+|Meow ~">
+    
+
+    <meta name="apple-mobile-web-app-title" content="&lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿">
+    
+    
+    <link rel="icon" href="/favicon-64.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="mask-icon" size="any" href="/pinned-icon.svg">
+    
+    
+    
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:site" content="@cinr4">
+    <meta name="twitter:creator" content="@cinr4">
+    <meta name="twitter:title" content="一個簡單的題目 (Reverse Integer) | &lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿">
+    <meta name="twitter:description" content="故事的起因是因為有個人在論壇上問了這個題目，不過他們在檢查overflow這件事情非常的software&hellip;，那時我就在想，為什麼不用jump if overflow靠硬體計算操作時設定overflow flag解決呢？於是這個點子卡在腦中，很想特別講出來，但又覺得講這種事情很麻煩，所以就簡單寫了這篇。|Meow ~">
+    <meta name="twitter:image" content="https://rniczh.github.io/img/twitter-card.png">
+    
+
+
+    <link rel="stylesheet" href="/assets/syntax.css">
+    <link rel="stylesheet" href="/assets/primer-build.css">
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+    <link rel="stylesheet" href="/assets/style.css">
+  </head>
+
+
+  <body class="bg-gray">
+    <div id="holy" class="container-lg bg-white h-100">
+
+      <div id="header" class="px-1 bg-white">
+	<link rel="shortcut icon" href="/favicon.ico">
+<nav class="UnderlineNav UnderlineNav--right px-2">
+  <a class="UnderlineNav-actions muted-link h2" href="https://rniczh.github.io">
+    &lt;・ ))&gt;&lt;&lt; ヽ(=^･ω･^=)丿
+  </a>
+
+  
+  
+  <div class="UnderlineNav-body">
+    
+    
+    <a class="UnderlineNav-item " href="/blog/">
+      
+      <span>Blog</span>
+    </a>
+    
+    
+    
+    <a class="UnderlineNav-item " href="/">
+      
+      <span>Info</span>
+    </a>
+    
+    
+  </div>
+  
+</nav>
+
+      </div>
+
+      <div role="main" id="main" class="holy-main markdown-body px-4 bg-white">
+	
+
+
+
+
+
+
+
+<br/>
+<div class="Subhead"  style="background-color: #dbebff; border-radius: 10px;  border:20px #dbebff solid;">
+  <div class="Subhead-heading">
+    <div class="h1 mt-3 mb-1">一個簡單的題目 (Reverse Integer)</div>
+  </div>
+  <div class="Subhead-description">
+    
+
+<a style="text-decoration: none;" href='/categories/daily' class="muted-link">
+  <span class="Label Label--gray-darker">Daily</span>
+</a>
+
+
+
+<a style="text-decoration: none;" href='/tags/asm' class="muted-link">
+  <span class="Label Label--gray">asm</span>
+</a>
+
+<a style="text-decoration: none;" href='/tags/cpp' class="muted-link">
+  <span class="Label Label--gray">cpp</span>
+</a>
+
+
+
+    
+    <div class="float-md-right">
+      <span title="Lastmod: 2019-07-31. Published at: 2019-07-31.">
+	
+	  Published: 2019-07-31
+	
+      </span>
+    </div>
+    
+  </div>
+</div>
+<article>
+  
+  <section class="pb-6 mb-3 border-bottom">
+    <p>故事的起因是因為有個人在論壇上問了這個題目，不過他們在檢查overflow這件事情非常的software&hellip;，那時我就在想，為什麼不用jump if overflow靠硬體計算操作時設定overflow flag解決呢？於是這個點子卡在腦中，很想特別講出來，但又覺得講這種事情很麻煩，所以就簡單寫了這篇。</p>
+
+<h2 id="problem">Problem</h2>
+
+<p>在繼續講之前可以先翻到 <a href="https://leetcode.com/problems/reverse-integer/">https://leetcode.com/problems/reverse-integer/</a> 看一下題目。</p>
+
+<p>基本上題目是這樣的：</p>
+
+<ol>
+<li>i32 <code>1234500</code> 經過reverse會回傳 i32 <code>54321</code></li>
+<li>i32 <code>1234567899</code> 經過reverse會因為發現overflow所以應該回傳 i32  <code>0</code></li>
+</ol>
+
+<p>而Leetcode那邊應該是在編譯時加入 <code>-fsanitize=undefined</code> ，所以會安插runtime check來檢查你是否做了undefined的行為，像是兩數相加後overflow這種事情。</p>
+
+<h2 id="a-recursive-solution-in-c-plus-plus">A recursive solution in C++</h2>
+
+<p>先讓我們寫個無法解決Overflow的解法吧，之後再繼續更正並優化。</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++"><span style="color:#902000">int</span> <span style="color:#06287e">reverse</span>(<span style="color:#902000">int</span> n, <span style="color:#902000">int</span> r <span style="color:#666">=</span> <span style="color:#40a070">0</span>) {
+  <span style="color:#007020;font-weight:bold">if</span> (n <span style="color:#666">==</span> <span style="color:#40a070">0</span>)
+	<span style="color:#007020;font-weight:bold">return</span> r;
+
+  r <span style="color:#666">=</span> r <span style="color:#666">*</span> <span style="color:#40a070">10</span> <span style="color:#666">+</span> n <span style="color:#666">%</span> <span style="color:#40a070">10</span>;
+
+  <span style="color:#007020;font-weight:bold">return</span> reverse(n <span style="color:#666">/</span> <span style="color:#40a070">10</span>, r);
+}
+</code></pre></div>
+<p>因為還蠻直觀的，所以細節就不多說了，那由於Leetcode針對這個有安插runtime check，所以可能就就會報出這種錯誤訊息：</p>
+
+<p><code>main.cc:14:8: runtime error: signed integer overflow: 998765432 * 10 cannot be represented in type 'int'</code></p>
+
+<h2 id="using-bulitin-xxx-overflow">Using __bulitin_xxx_overflow</h2>
+
+<p>明顯上面那個不可能是我們要的解答，這時候想要處理Overflow，還不可以用Software的解決方式，於是乎我們有了兩個函式可以使用，分別是 <code>__builtin_add_overflow</code> 和 <code>__builtin_mul_overflow</code> ，因為兩個行為除了一個是加一個是乘以外，處理是一樣的，所以就介紹其中一個：</p>
+
+<p><strong><code>__builtin_add_overflow(a, b, &amp;c)</code></strong> : c = a + b, if overflow, this function return 1, otherwise 0</p>
+
+<p>在x86架構下，他可能會產生如下指令：</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-asm" data-lang="asm"><span style="color:#06287e">add</span> <span style="color:#bb60d5">%a</span>, <span style="color:#bb60d5">%b</span> <span style="">//</span> <span style="color:#60add5">b</span> <span style="">=</span> <span style="color:#60add5">a</span> <span style="">+</span> <span style="color:#60add5">b</span>, <span style="color:#60add5">it</span> <span style="color:#60add5">will</span> <span style="color:#60add5">set</span> <span style="color:#60add5">OF</span> <span style="color:#60add5">if</span> <span style="color:#60add5">overflow</span>
+<span style="color:#06287e">jo</span>  <span style="color:#60add5">Label</span>  <span style="">//</span> <span style="color:#60add5">if</span> <span style="color:#60add5">OF</span> <span style="">==</span> <span style="color:#40a070">1</span>, <span style="color:#60add5">jump</span> <span style="color:#60add5">to</span> <span style="color:#60add5">label</span>
+<span style="color:#4070a0">...</span></code></pre></div>
+<p>於是乎我們有了這樣的解答：</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++"><span style="color:#902000">int</span> <span style="color:#06287e">reverse</span>(<span style="color:#902000">int</span> n, <span style="color:#902000">int</span> r <span style="color:#666">=</span> <span style="color:#40a070">0</span>) {
+  <span style="color:#007020;font-weight:bold">if</span> (n <span style="color:#666">==</span> <span style="color:#40a070">0</span>)
+	<span style="color:#007020;font-weight:bold">return</span> r;
+  <span style="color:#007020;font-weight:bold">return</span> __builtin_mul_overflow(r, <span style="color:#40a070">10</span>, <span style="color:#666">&amp;</span>r) <span style="color:#666">||</span>
+	 __builtin_add_overflow(r, n <span style="color:#666">%</span> <span style="color:#40a070">10</span>, <span style="color:#666">&amp;</span>r) <span style="color:#666">?</span>
+	<span style="color:#40a070">0</span> <span style="color:#666">:</span> reverse(n <span style="color:#666">/</span> <span style="color:#40a070">10</span>, r);
+}
+</code></pre></div>
+<p>簡單來就是 __builtin_mul_overflow如果回傳0，那麼就會繼續往下做 __builtin_add_overflow，如果也是0，那麼就會執行 <code>reverse(n/10, r)</code></p>
+
+<p>但如果其中有一個是1，那麼因為 <code>or</code> 的 Short-circuit evaluation 特性，所以就會直接跳出到0那，所以如果是 mul 發生1，那就會直接跳過add，到0那裡，而不會繼續執行add。</p>
+
+<p>如此一來就解決了這個問題了。</p>
+
+<p><br/>
+<br/>
+<br/>
+<br/></p>
+
+<p>&hellip;.
+如果你以為這樣就結束了，那就太天真了。</p>
+
+<p>雖然說Leetcode確實是通過了，但是我們來檢查一下到底產生了什麼指令，採用 <code>g++ -O3 -fno-stack-protector</code> 來編譯得到下面的結果：</p>
+
+<figure>
+    <img src="/ox-hugo/2019-07-30_23-13_2019-07-31_00-35-02.png"/> 
+</figure>
+
+
+<p>他做了一些我覺得很鳥的事情，其中add操作完後，他是判斷沒有overflow就跳到1277，而接下來沒有跳的話代表是overflow，所以跳到結尾去，而中間又生成一堆無用的指令，這時候可以回想一下計算機架構到底學了什麼，然後現在如何善用計算機pipline的優勢。</p>
+
+<h2 id="using-builtin-expect">Using ____builtin_expect</h2>
+
+<p>其中一個想法就是，告知編譯器brach到底常不常發生，透過這個方式可以將接下來比較有可能執行的指令放在
+fall-thorugh下，而不是還要jmp到其他地方，像是以這個產生的指令，合理情況下overflow應該是比較少發生的，所以應該是當overflow發生再jump就好，如此可以善用計算機的pipeline。</p>
+
+<p>於是乎引入 <code>__builtin_expect</code> ，一樣簡單介紹下：</p>
+
+<p><strong><code>___builtin_expect(a, b)</code></strong>: tell compiler that a == b is mostly happen, and return `a&rsquo;</p>
+
+<p>所以說像是一開始判斷 n == 0 ，因為是recursive的stop condition，所以是最後才會發生，就可以寫成：</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++"><span style="color:#007020;font-weight:bold">if</span> (__builtin_expect(<span style="color:#666">!</span>n, <span style="color:#40a070">0</span>))
+  <span style="color:#007020;font-weight:bold">return</span> r
+</code></pre></div>
+<p>代表 <code>!n == 0</code> mostly happen，並回傳 <code>!n</code> 。</p>
+
+<p>因此你可以當作這段是寫成：</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++"><span style="color:#007020;font-weight:bold">if</span> (<span style="color:#666">!</span>n)
+  <span style="color:#007020;font-weight:bold">return</span> r
+</code></pre></div>
+<p>即 <code>if (n == 0) return r</code></p>
+
+<p>但他同時告知了編譯器， <code>!n == 0</code> 是比較常發生的，意思就是 n 比較可能是非0的數字</p>
+
+<h2 id="final">Final</h2>
+
+<p>最後便可以把程式碼寫成：</p>
+<div class="highlight"><pre style="background-color:#f0f0f0;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++"><span style="color:#902000">int</span> <span style="color:#06287e">reverse</span>(<span style="color:#902000">int</span> n, <span style="color:#902000">int</span> r <span style="color:#666">=</span> <span style="color:#40a070">0</span>) {
+  <span style="color:#007020;font-weight:bold">if</span> (__builtin_expect(<span style="color:#666">!</span>n, <span style="color:#40a070">0</span>))
+	<span style="color:#007020;font-weight:bold">return</span> r;
+  <span style="color:#007020;font-weight:bold">return</span> __builtin_expect(__builtin_mul_overflow(r, <span style="color:#40a070">10</span>, <span style="color:#666">&amp;</span>r) <span style="color:#666">||</span>
+			  __builtin_add_overflow(r, n <span style="color:#666">%</span> <span style="color:#40a070">10</span>, <span style="color:#666">&amp;</span>r), <span style="color:#40a070">0</span>) <span style="color:#666">?</span>
+	<span style="color:#40a070">0</span> <span style="color:#666">:</span> reverse(n <span style="color:#666">/</span> <span style="color:#40a070">10</span>, r);
+</code></pre></div>
+<p>來看看他產生的指令：</p>
+
+<figure>
+    <img src="/ox-hugo/2019-07-30_23-09_2019-07-31_00-55-28.png"/> 
+</figure>
+
+
+<p>如此一來就合理多了。</p>
+  </section>
+
+  <section>
+    
+    <script src="https://utteranc.es/client.js"
+	repo="rniczh/rniczh.github.io"
+	issue-term="pathname"
+	label="✨"
+	theme="github-light"
+	crossorigin="anonymous"
+	async>
+    </script>
+    
+  </section>
+</article>
+
+      </div>
+
+      <div id="side" class="pr-1 bg-white">
+	<aside class="pr-3">
+	  
+    
+    <div id="toc" class="Box Box--blue mb-3">
+      <b>一個簡單的題目 (Reverse Integer)</b>
+      <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#problem">Problem</a></li>
+<li><a href="#a-recursive-solution-in-c-plus-plus">A recursive solution in C++</a></li>
+<li><a href="#using-bulitin-xxx-overflow">Using __bulitin_xxx_overflow</a></li>
+<li><a href="#using-builtin-expect">Using ____builtin_expect</a></li>
+<li><a href="#final">Final</a></li>
+</ul></li>
+</ul>
+</nav>
+    </div>
+
+
+
+  
+  
+    <div>
+	
+	  <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+	
+
+	
+	  <iframe src="https://www.facebook.com/plugins/share_button.php?href=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&layout=button&size=small&mobile_iframe=true&width=61&height=20&appId" width="61" height="20" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true" allow="encrypted-media"></iframe>
+	
+
+	
+
+	
+
+      </div>
+  
+
+
+
+	</aside>
+      </div>
+
+      <div id="footer" class="pt-2 pb-3 bg-white text-center">
+	
+
+  <span class="text-small text-gray">
+
+
+    &copy; H.-S. Zheng 2019 &middot; 
+
+    
+
+    <a class="p" href=https://github.com/rniczh> <b>Github</b> </a>
+
+    
+
+    &nbsp; and
+&nbsp; <a class="p" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en">(CC BY-NC-SA 4.0) License</a>
+
+
+  </span>
+
+
+      </div>
+    </div>
+
+
+    
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({ tex2jax: { inlineMath: [['$','$'], ['\\(','\\)']] } });</script>
+  </body>
+</html>

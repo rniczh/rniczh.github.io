@@ -7,10 +7,28 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; H.-S. Zheng 2019</copyright>
-    <lastBuildDate>Wed, 05 Jun 2019 00:00:00 +0800</lastBuildDate>
+    <lastBuildDate>Wed, 31 Jul 2019 00:00:00 +0800</lastBuildDate>
     
 	<atom:link href="https://rniczh.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>asm</title>
+      <link>https://rniczh.github.io/tags/asm/</link>
+      <pubDate>Wed, 31 Jul 2019 00:00:00 +0800</pubDate>
+      
+      <guid>https://rniczh.github.io/tags/asm/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>cpp</title>
+      <link>https://rniczh.github.io/tags/cpp/</link>
+      <pubDate>Wed, 31 Jul 2019 00:00:00 +0800</pubDate>
+      
+      <guid>https://rniczh.github.io/tags/cpp/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>lifetimes</title>
