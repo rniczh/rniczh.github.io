@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<!--suppress ALL -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>simulating-time-chrome-tracing-json</title>
+    <script src="script/quarkdown.js"></script>
+    <script>const capabilities = window.quarkdownCapabilities</script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="theme/theme.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.9.0/highlightjs-line-numbers.min.js"></script>
+    <script src="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.css"/>
+    <script>capabilities.code = true;</script>
+
+    <style>
+
+        body {
+        }
+
+        .page-break {
+            break-before: always;
+        }
+
+        .quarkdown-plain .page-break {
+            break-before: avoid;
+            break-after: avoid;
+        }
+
+        body.quarkdown-plain {
+            margin: 2.5cm 2.5cm 2.5cm 2.5cm;
+        }
+
+        body.quarkdown-slides .reveal {
+            width: 8.5in;
+            height: 11.0in;
+        }
+
+        @page {
+            size: 8.5in 11.0in;
+            margin: 2.5cm 2.5cm 2.5cm 2.5cm;
+        }
+
+        p {
+        }
+    </style>
+    <script>
+        const doc = new PlainDocument();
+        prepare(doc);
+    </script>
+</head>
+<body class="quarkdown quarkdown-plain">
+<aside id="margin-area-left" class="margin-area"></aside>
+<main>
+    <div class="page-margin-content page-margin-bottom-right" data-on-left-page="bottom-right" data-on-right-page="bottom-right"><p>November 23, 2025</p></div><h1 id="simulating-time-how-to-hand-craft-chrome-trace-viewer-json-for-visualization" data-decorative="">Simulating Time: How to Hand-Craft Chrome Trace Viewer JSON for Visualization</h1><blockquote><p>It&rsquo;s been a few months since I came to Toronto. The weather has cooled off a bit lately.
+Earlier this November, we experienced the earliest first snowfall here in the past 56 years.
+It&rsquo;s warmed up slightly since then, with an average temperature around 3°C to 6°C, pretty comfortable,
+just right for a hoodie and a light coat. By the way, I might need to buy another pair of snow boots.</p><p class="attribution">Hong-Sheng Zheng, November 23, 2025</p></blockquote><figure><img src="media/20251122@-1409026192.jpg" alt="Snow-covered railway" style="width: 100.0%;" /></figure><p>This post introduces a useful visualization tool for timeline tracing:
+<a href="https://www.chromium.org/developers/how-tos/trace-event-profiling-tool/">Chrome Trace Viewer</a>. You
+can open the tool with the URL <span class="codespan-content"><code>chrome://tracing</code></span>, and you can use it directly in your chrome-based browser.
+If you are new to this tool, after loading a JSON file into the viewer, try pressing &ldquo;W&rdquo;, &ldquo;A&rdquo;, &ldquo;S&rdquo;, &ldquo;D&rdquo;
+to navigate around, these are the common keyboard shortcuts for panning and zooming the timeline.</p><p>This project was developed by the Google Chrome team and has now evolved into the more
+advanced <a href="https://ui.perfetto.dev/">Perfetto</a>. Both tools can ingest data in
+the same JSON format, so don&rsquo;t worry about which one you use. These tools allow you to
+observe the execution timeline of your program.
+When I was an AI compiler engineer at MediaTek, I frequently used these charts to help me analyze
+performance across different engines, so I can explore parallelism, workload balance, and so on, to
+determine how to further optimize programs. 😀</p><h2 id="an-example">An Example</h2><p>Before diving deep into the format for the trace viewer, let me start with an example. <br />
+Imagine a data processing flow: Load → Compute → Store.
+Each stage is handled by a different engine, and data transmission is streaming:</p><ul><li>Load: Uses ping-pong buffering, allowing the system to pre-load an extra buffer ahead of time.</li><li>Compute: Does not need to wait for the Load phase to fully complete; it can start processing early (overlapped execution).</li><li>Store: Similarly, it can transfer small chunks of processed data to the Store engine for write-back immediately.</li></ul><p>In this chart, we also show the memory bandwidth, which indicates whether the current program has hit the
+memory bandwidth limit. Here, we show a compute-bound example, that the computation time dominates the whole program execution.</p><figure><img src="media/load-compute-store-timeline@1650005889.jpg" alt="Example timeline" style="width: 100.0%;" /></figure><p>Compared to raw statistical results, a visual chart is significantly more readable. Hmm&hellip; Has anyone else heard
+of the &ldquo;Coke vs. Tea&rdquo; theory? I can&rsquo;t quite remember where I first encountered this idea 🥸,
+but it just illustrates the law of Diminishing Marginal Utility.
+The theory goes that the first sip of Coke provides the maximum rush of satisfaction, but that feeling drops precipitously with every subsequent sip.
+So the satisfaction you get from drinking a large bottle of Coke is roughly the same as drinking a small can of Coke; the extra volume does not increase happiness.
+Similarly, these charts were exciting to look at initially, but they can become exhausting when you&rsquo;re deeply
+involved in identifying optimization issues every day 😅</p><h2 id="understanding-the-trace-event-format">Understanding the Trace Event Format</h2><p>To generate this chart, you need to understand the JSON format used by Trace Viewer.
+Here is the structure of the data shown in the image above. You can copy it and try it.
+The most important component is the <span class="codespan-content"><code>traceEvents</code></span> array.
+You can read the full specification here: <a href="https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview?tab=t.0#heading=h.yr4qxyxotyw">Trace Event Format</a></p><pre><code class="language-json">{
+    &quot;displayTimeUnit&quot;: &quot;ns&quot;,
+    &quot;traceEvents&quot;: [
+        { &quot;name&quot;: &quot;process_name&quot;, &quot;ph&quot;: &quot;M&quot;, &quot;pid&quot;: 0, &quot;tid&quot;: 0, &quot;args&quot;: { &quot;name&quot;: &quot;Example&quot; } },
+
+        { &quot;name&quot;: &quot;thread_name&quot;, &quot;ph&quot;: &quot;M&quot;, &quot;pid&quot;: 0, &quot;tid&quot;: 1,
+          &quot;args&quot;: { &quot;name&quot;: &quot;1. Load Engine&quot; } },
+        { &quot;name&quot;: &quot;thread_name&quot;, &quot;ph&quot;: &quot;M&quot;, &quot;pid&quot;: 0, &quot;tid&quot;: 2,
+          &quot;args&quot;: { &quot;name&quot;: &quot;2. Compute Engine&quot; } },
+        { &quot;name&quot;: &quot;thread_name&quot;, &quot;ph&quot;: &quot;M&quot;, &quot;pid&quot;: 0, &quot;tid&quot;: 3,
+          &quot;args&quot;: { &quot;name&quot;: &quot;3. Store Engine&quot; } },
+        { &quot;name&quot;: &quot;thread_name&quot;, &quot;ph&quot;: &quot;M&quot;, &quot;pid&quot;: 0, &quot;tid&quot;: 4,
+          &quot;args&quot;: { &quot;name&quot;: &quot;4. Memory Bandwidth&quot; } },
+
+        { &quot;name&quot;: &quot;Load_#0&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 0, &quot;pid&quot;: 0, &quot;tid&quot;: 1,
+          &quot;args&quot;: { &quot;dest&quot;: &quot;Compute_#0&quot; }},
+        { &quot;name&quot;: &quot;Load_#0&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 10000, &quot;pid&quot;: 0, &quot;tid&quot;: 1},
+        { &quot;name&quot;: &quot;Compute_#0&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 2000, &quot;pid&quot;: 0, &quot;tid&quot;: 2,
+          &quot;args&quot;: { &quot;src&quot;: &quot;Load_#0&quot;, &quot;dest&quot;: &quot;Store_#0&quot; }},
+        { &quot;name&quot;: &quot;Compute_#0&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 22000, &quot;pid&quot;: 0, &quot;tid&quot;: 2},
+        { &quot;name&quot;: &quot;Store_#0&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 14000, &quot;pid&quot;: 0, &quot;tid&quot;: 3,
+          &quot;args&quot;: { &quot;src&quot;: &quot;Compute_#0&quot; }},
+        { &quot;name&quot;: &quot;Store_#0&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 24000, &quot;pid&quot;: 0, &quot;tid&quot;: 3},
+
+        { &quot;name&quot;: &quot;Load_#1&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 10000, &quot;pid&quot;: 0, &quot;tid&quot;: 1,
+          &quot;args&quot;: { &quot;dest&quot;: &quot;Compute_#1&quot; }},
+        { &quot;name&quot;: &quot;Load_#1&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 20000, &quot;pid&quot;: 0, &quot;tid&quot;: 1 },
+        { &quot;name&quot;: &quot;Compute_#1&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 23000, &quot;pid&quot;: 0, &quot;tid&quot;: 2,
+          &quot;args&quot;: { &quot;src&quot;: &quot;Load_#1&quot;, &quot;dest&quot;: &quot;Store_#1&quot; } },
+        { &quot;name&quot;: &quot;Compute_#1&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 43000, &quot;pid&quot;: 0, &quot;tid&quot;: 2 },
+        { &quot;name&quot;: &quot;Store_#1&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 35000, &quot;pid&quot;: 0, &quot;tid&quot;: 3,
+          &quot;args&quot;: { &quot;src&quot;: &quot;Compute_#1&quot; } },
+        { &quot;name&quot;: &quot;Store_#1&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 45000, &quot;pid&quot;: 0, &quot;tid&quot;: 3 },
+
+        { &quot;name&quot;: &quot;Load_#2&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 22000, &quot;pid&quot;: 0, &quot;tid&quot;: 1,
+          &quot;args&quot;: { &quot;dest&quot;: &quot;Compute_#2&quot; } },
+        { &quot;name&quot;: &quot;Load_#2&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 32000, &quot;pid&quot;: 0, &quot;tid&quot;: 1 },
+        { &quot;name&quot;: &quot;Compute_#2&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 44000, &quot;pid&quot;: 0, &quot;tid&quot;: 2,
+          &quot;args&quot;: { &quot;src&quot;: &quot;Load_#2&quot;, &quot;dest&quot;: &quot;Store_#2&quot; } },
+        { &quot;name&quot;: &quot;Compute_#2&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 64000, &quot;pid&quot;: 0, &quot;tid&quot;: 2 },
+        { &quot;name&quot;: &quot;Store_#2&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 56000, &quot;pid&quot;: 0, &quot;tid&quot;: 3,
+          &quot;args&quot;: { &quot;src&quot;: &quot;Compute_#2&quot; } },
+        { &quot;name&quot;: &quot;Store_#2&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 66000, &quot;pid&quot;: 0, &quot;tid&quot;: 3 },
+
+        { &quot;name&quot;: &quot;Load_#3&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 43000, &quot;pid&quot;: 0, &quot;tid&quot;: 1,
+          &quot;args&quot;: { &quot;dest&quot;: &quot;Compute_#3&quot; } },
+        { &quot;name&quot;: &quot;Load_#3&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 53000, &quot;pid&quot;: 0, &quot;tid&quot;: 1 },
+        { &quot;name&quot;: &quot;Compute_#3&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 65000, &quot;pid&quot;: 0, &quot;tid&quot;: 2,
+          &quot;args&quot;: { &quot;src&quot;: &quot;Load_#3&quot;, &quot;dest&quot;: &quot;Store_#3&quot; } },
+        { &quot;name&quot;: &quot;Compute_#3&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 85000, &quot;pid&quot;: 0, &quot;tid&quot;: 2 },
+        { &quot;name&quot;: &quot;Store_#3&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 77000, &quot;pid&quot;: 0, &quot;tid&quot;: 3,
+          &quot;args&quot;: { &quot;src&quot;: &quot;Compute_#3&quot; } },
+        { &quot;name&quot;: &quot;Store_#3&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 87000, &quot;pid&quot;: 0, &quot;tid&quot;: 3 },
+
+        { &quot;name&quot;: &quot;Load_#4&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 64000, &quot;pid&quot;: 0, &quot;tid&quot;: 1,
+          &quot;args&quot;: { &quot;dest&quot;: &quot;Compute_#4&quot; } },
+        { &quot;name&quot;: &quot;Load_#4&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 74000, &quot;pid&quot;: 0, &quot;tid&quot;: 1 },
+        { &quot;name&quot;: &quot;Compute_#4&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 86000, &quot;pid&quot;: 0, &quot;tid&quot;: 2,
+          &quot;args&quot;: { &quot;src&quot;: &quot;Load_#4&quot;, &quot;dest&quot;: &quot;Store_#4&quot; } },
+        { &quot;name&quot;: &quot;Compute_#4&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 106000, &quot;pid&quot;: 0, &quot;tid&quot;: 2 },
+        { &quot;name&quot;: &quot;Store_#4&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 98000, &quot;pid&quot;: 0, &quot;tid&quot;: 3,
+          &quot;args&quot;: { &quot;src&quot;: &quot;Compute_#4&quot; } },
+        { &quot;name&quot;: &quot;Store_#4&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 108000, &quot;pid&quot;: 0, &quot;tid&quot;: 3 },
+
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 0, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 14000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 40 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 20000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 22000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 40 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 24000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 32000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 0 } },
+
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 35000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 43000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 40 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 45000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 53000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 0 } },
+
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 56000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 64000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 40 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 66000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 74000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 0 } },
+
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 77000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 85000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 40 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 87000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 95000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 0 } },
+
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 98000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 106000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 108000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } }
+    ]
+}</code></pre><h3 id="trace-event-parameters">Trace Event Parameters</h3><p>Each trace event has the following parameters:</p><ul><li><strong>name</strong>: The name of the event</li><li><strong>cat</strong>: Category. While not visually distinct, this is useful for filtering events with search.</li><li><strong>ph</strong>: Phase, which determines how to interpret this event (There are five common events)<ul><li><strong>&ldquo;X&rdquo;</strong>: Complete event with duration</li><li><strong>&ldquo;M&rdquo;</strong>: Metadata event</li><li><strong>&ldquo;C&rdquo;</strong>: Counter event</li><li><strong>&ldquo;B&rdquo;</strong>: Marks the beginning of an event.</li><li><strong>&ldquo;E&rdquo;</strong>: Marks the end of an event.</li></ul></li><li><strong>dur</strong>: Duration, the time spent on this event (used with phase &ldquo;X&rdquo;)</li><li><strong>ts</strong>: Timestamp in nanoseconds (ns).</li><li><strong>pid</strong>: Process ID</li><li><strong>tid</strong>: Thread ID</li><li><strong>args</strong>: Additional arguments/metadata for the event</li></ul><h3 id="structure-overview">Structure Overview</h3><p>The trace events structure is organized from top level down as: process → thread → event.
+A process can be thought of as the current <span class="codespan-content"><code>Example</code></span>, while threads represent the vertical lanes
+within that process.
+In our example, we have threads for &ldquo;1. Load Engine&rdquo;, &ldquo;2. Compute Engine&rdquo;, &ldquo;3. Store Engine&rdquo;, and &ldquo;4. Memory Bandwidth&rdquo;.</p><p>Here&rsquo;s a simple structural diagram for easier understanding:</p><figure><img src="media/structure@701658832.png" alt="Structure diagram" style="width: 100.0%;" /></figure><h3 id="initializing-process-and-threads">Initializing Process and Threads</h3><p>First, we need to initialize the processes and threads. Using <span class="codespan-content"><code>ph: &quot;M&quot;</code></span>, which stands for &ldquo;metadata&rdquo;.
+When this phase is selected, the viewer interprets the event based on the &ldquo;name&rdquo; field to determine
+whether it&rsquo;s a process or a thread. For a process, set <span class="codespan-content"><code>name</code></span> to <span class="codespan-content"><code>&quot;process_name&quot;</code></span>.
+Similarly, for a thread, set it to <span class="codespan-content"><code>&quot;thread_name&quot;</code></span>. And the actual display name is specified in the <span class="codespan-content"><code>args.name</code></span> field.</p><pre><code class="language-json">{ &quot;name&quot;: &quot;process_name&quot;, &quot;ph&quot;: &quot;M&quot;, &quot;pid&quot;: 0, &quot;tid&quot;: 0, &quot;args&quot;: { &quot;name&quot;: &quot;Example&quot; } },
+{ &quot;name&quot;: &quot;thread_name&quot;, &quot;ph&quot;: &quot;M&quot;, &quot;pid&quot;: 0, &quot;tid&quot;: 1, &quot;args&quot;: { &quot;name&quot;: &quot;1. Load Engine&quot; } },
+{ &quot;name&quot;: &quot;thread_name&quot;, &quot;ph&quot;: &quot;M&quot;, &quot;pid&quot;: 0, &quot;tid&quot;: 2, &quot;args&quot;: { &quot;name&quot;: &quot;2. Compute Engine&quot; } },
+{ &quot;name&quot;: &quot;thread_name&quot;, &quot;ph&quot;: &quot;M&quot;, &quot;pid&quot;: 0, &quot;tid&quot;: 3, &quot;args&quot;: { &quot;name&quot;: &quot;3. Store Engine&quot; } },
+{ &quot;name&quot;: &quot;thread_name&quot;, &quot;ph&quot;: &quot;M&quot;, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;name&quot;: &quot;4. Memory Bandwidth&quot; } },</code></pre><blockquote class="note" style="--quote-type-label: 'Note';" data-labeled=""><p>You must also set the <span class="codespan-content"><code>pid</code></span> and <span class="codespan-content"><code>tid</code></span>. While a process doesn&rsquo;t require a <span class="codespan-content"><code>tid</code></span>.
+If you want a thread to belong to a specific process, the thread&rsquo;s <span class="codespan-content"><code>pid</code></span> must match the process&rsquo;s <span class="codespan-content"><code>pid</code></span>.</p></blockquote><h3 id="duration-events">Duration Events</h3><p>Next, we&rsquo;ll introduce two types of events. For simple duration events, you can use two different approaches:</p><h4 id="_1-beginend-pairs-ldquobrdquo-and-ldquoerdquo">1. Begin/End Pairs (&ldquo;B&rdquo; and &ldquo;E&rdquo;)</h4><p>This marks the beginning and end of an event separately. The viewer draws a rectangle using the <span class="codespan-content"><code>ts</code></span>
+values to show the event&rsquo;s execution from start to finish. The <span class="codespan-content"><code>tid</code></span> must match the corresponding thread.
+For example, since we initialized the Load Engine at <span class="codespan-content"><code>tid = 1</code></span>, the event&rsquo;s <span class="codespan-content"><code>tid</code></span> must also be set to 1.
+The same applies to <span class="codespan-content"><code>pid</code></span>. The <span class="codespan-content"><code>cat</code></span> (category) field helps you filter and find specific categories,
+though we just set to a meaningless name.</p><pre><code class="language-json">{ &quot;name&quot;: &quot;Load_#1&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;B&quot;, &quot;ts&quot;: 10000, &quot;pid&quot;: 0, &quot;tid&quot;: 1, &quot;args&quot;: ...},
+{ &quot;name&quot;: &quot;Load_#1&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;E&quot;, &quot;ts&quot;: 20000, &quot;pid&quot;: 0, &quot;tid&quot;: 1, &quot;args&quot;: ...},</code></pre><h4 id="_2-complete-events-ldquoxrdquo">2. Complete Events (&ldquo;X&rdquo;)</h4><p>Alternatively, you can use <span class="codespan-content"><code>ph: &quot;X&quot;</code></span> to represent an event with a single entry instead of a pair.
+This approach uses both <span class="codespan-content"><code>ts</code></span> and <span class="codespan-content"><code>dur</code></span>. For example, if <span class="codespan-content"><code>ts</code></span> is 100 and <span class="codespan-content"><code>dur</code></span> is 50,
+the event spans the time range <span class="codespan-content"><code>[100, 150]</code></span>.</p><p>This is typically used when the execution time is known in advance at compile time.
+For instance, in ion-based quantum computing systems, pulse duration determines the rotation angle,
+requiring precise timing control. In such systems, all timing is known at compile time,
+so you know exactly how long each event will take. Similarly, in simulation systems with cost models,
+you can estimate the execution duration for a given computation. Using this phase can reduce JSON data size,
+which is quite beneficial.</p><pre><code class="language-json">{
+  &quot;name&quot;: &quot;Load_#1&quot;,
+  &quot;cat&quot;: &quot;foo&quot;,
+  &quot;ph&quot;: &quot;X&quot;,
+  &quot;ts&quot;: 10000,
+  &quot;dur&quot;: 10000,
+  &quot;pid&quot;: 0,
+  &quot;tid&quot;: 1,
+  &quot;args&quot;: { &quot;dest&quot;: &quot;Compute_#1&quot; }
+}</code></pre><h3 id="counter-events-ldquocrdquo">Counter Events (&ldquo;C&rdquo;)</h3><p>Counter events are used to represent continuous state changes, such as memory bandwidth in our chart.
+The value changes continuously but only updates at specific time points. Each event sets a value at a given timestamp.
+In the chart, we set the &ldquo;GB/s&rdquo; parameter to 40 at <span class="codespan-content"><code>ts</code></span> of 14000 (ns):</p><pre><code class="language-json">{ &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 14000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 40 } },</code></pre><h3 id="nested-events">Nested Events</h3><p>There&rsquo;s another display method we haven&rsquo;t shown in the chart yet: nested events.</p><pre><code class="language-json">{
+  &quot;traceEvents&quot;: [
+    { &quot;name&quot;: &quot;ParentEvent&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;X&quot;, &quot;ts&quot;: 1000, &quot;dur&quot;: 500, &quot;pid&quot;: 1, &quot;tid&quot;: 1 },
+    { &quot;name&quot;: &quot;ChildEvent&quot;, &quot;cat&quot;: &quot;foo&quot;, &quot;ph&quot;: &quot;X&quot;, &quot;ts&quot;: 1100, &quot;dur&quot;: 300, &quot;pid&quot;: 1, &quot;tid&quot;: 1 }
+  ]
+}</code></pre><p>The display effect is shown below. You can place two differently named events with overlapping times on the same <span class="codespan-content"><code>tid</code></span>,
+and both events will be displayed in the same area stacked vertically, rather than being separated.</p><figure><img src="media/nested@1545052838.jpg" alt="Nested events example" style="width: 100.0%;" /></figure><p>Good! 🎉 Until now, we cover all the basic elements for expressing trace events. I think it&rsquo;s far
+enough for most of the scenarios.</p><h2 id="pitfalls">Pitfalls</h2><p>There are some traps when using trace events that you should be aware of:</p><ol><li><p><strong>Time Unit Configuration</strong>: All time settings use nanoseconds (ns) as the unit. For the original <span class="codespan-content"><code>chrome://tracing</code></span>,
+you can force the <strong>display</strong> of event details to show nanoseconds by setting <span class="codespan-content"><code>&quot;displayTimeUnit&quot;: &quot;ns&quot;</code></span>.
+However, the timeline axis and other displays will still use milliseconds (ms), not nanoseconds.
+Therefore, when generating this data, you must use nanoseconds as the data standard, but be aware that
+the display uses milliseconds. Even if you set <span class="codespan-content"><code>&quot;displayTimeUnit&quot;: &quot;ns&quot;</code></span>, it only changes the internal
+information shown when you click on an event, not the external display.</p></li><li><p><strong>Time Normalization</strong>: The first <span class="codespan-content"><code>ts</code></span> value will be normalized to 0. Therefore, even if you set
+the first event&rsquo;s <span class="codespan-content"><code>ts</code></span> to 100, the display will still show it starting at 0. This is because the trace viewer
+was originally designed for use cases like web page operations and Android tracing, where timestamps often
+start at very high values. The leading empty space would be meaningless.</p></li></ol><hr /><h2 id="further-reading">Further Reading</h2><ul><li><a href="https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview">Trace Event Format Specification</a> - The official Google document detailing the complete trace event format</li><li><a href="https://www.chromium.org/developers/how-tos/trace-event-profiling-tool/">Chrome Tracing Documentation</a> - Chromium&rsquo;s official trace viewer website</li><li><a href="https://perfetto.dev/docs/">Perfetto Documentation</a> - The next-generation trace viewer tool</li></ul>
+</main>
+<aside id="margin-area-right" class="margin-area"></aside>
+</body>
+</html>
