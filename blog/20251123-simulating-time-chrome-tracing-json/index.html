@@ -33,6 +33,14 @@
             margin: 2.5cm 2.5cm 2.5cm 2.5cm;
         }
 
+        /* Responsive handling */
+        @media screen and (max-width: 1023px) {
+            body.quarkdown-plain > main {
+                min-width: 80%;
+                max-width: 100%;
+            }
+        }
+
         body.quarkdown-slides .reveal {
             width: 8.5in;
             height: 11.0in;
