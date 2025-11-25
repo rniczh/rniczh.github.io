@@ -33,14 +33,6 @@
             margin: 2.5cm 2.5cm 2.5cm 2.5cm;
         }
 
-        /* Responsive handling */
-        @media screen and (max-width: 1023px) {
-            body.quarkdown-plain > main {
-                min-width: 80%;
-                max-width: 100%;
-            }
-        }
-
         body.quarkdown-slides .reveal {
             width: 8.5in;
             height: 11.0in;
@@ -169,7 +161,7 @@ You can read the full specification here: <a href="https://docs.google.com/docum
         { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 74000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 0 } },
 
         { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 77000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
-        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 85000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 40 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 85000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
         { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 87000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
         { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 95000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 0 } },
 
@@ -177,7 +169,7 @@ You can read the full specification here: <a href="https://docs.google.com/docum
         { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 106000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
         { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 108000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } }
     ]
-}</code></pre><h3 id="trace-event-parameters">Trace Event Parameters</h3><p>Each trace event has the following parameters:</p><ul><li><strong>name</strong>: The name of the event</li><li><strong>cat</strong>: Category. While not visually distinct, this is useful for filtering events with search.</li><li><strong>ph</strong>: Phase, which determines how to interpret this event (There are five common events)<ul><li><strong>&ldquo;X&rdquo;</strong>: Complete event with duration</li><li><strong>&ldquo;M&rdquo;</strong>: Metadata event</li><li><strong>&ldquo;C&rdquo;</strong>: Counter event</li><li><strong>&ldquo;B&rdquo;</strong>: Marks the beginning of an event.</li><li><strong>&ldquo;E&rdquo;</strong>: Marks the end of an event.</li></ul></li><li><strong>dur</strong>: Duration, the time spent on this event (used with phase &ldquo;X&rdquo;)</li><li><strong>ts</strong>: Timestamp in nanoseconds (ns).</li><li><strong>pid</strong>: Process ID</li><li><strong>tid</strong>: Thread ID</li><li><strong>args</strong>: Additional arguments/metadata for the event</li></ul><h3 id="structure-overview">Structure Overview</h3><p>The trace events structure is organized from top level down as: process → thread → event.
+}</code></pre><h3 id="trace-event-parameters">Trace Event Parameters</h3><p>Each trace event has the following parameters:</p><ul><li><strong>name</strong>: The name of the event</li><li><strong>cat</strong>: Category. While not visually distinct, this is useful for filtering events with search.</li><li><strong>ph</strong>: Phase, which determines how to interpret this event (There are five common events)<ul><li><strong>&ldquo;X&rdquo;</strong>: Complete event with duration</li><li><strong>&ldquo;M&rdquo;</strong>: Metadata event</li><li><strong>&ldquo;C&rdquo;</strong>: Counter event</li><li><strong>&ldquo;B&rdquo;</strong>: Marks the beginning of an event.</li><li><strong>&ldquo;E&rdquo;</strong>: Marks the end of an event.</li></ul></li><li><strong>dur</strong>: Duration, the time spent on this event (used with phase &ldquo;X&rdquo;)</li><li><strong>ts</strong>: Timestamp in microseconds (µs).</li><li><strong>pid</strong>: Process ID</li><li><strong>tid</strong>: Thread ID</li><li><strong>args</strong>: Additional arguments/metadata for the event</li></ul><h3 id="structure-overview">Structure Overview</h3><p>The trace events structure is organized from top level down as: process → thread → event.
 A process can be thought of as the current <span class="codespan-content"><code>Example</code></span>, while threads represent the vertical lanes
 within that process.
 In our example, we have threads for &ldquo;1. Load Engine&rdquo;, &ldquo;2. Compute Engine&rdquo;, &ldquo;3. Store Engine&rdquo;, and &ldquo;4. Memory Bandwidth&rdquo;.</p><p>Here&rsquo;s a simple structural diagram for easier understanding:</p><figure><img src="media/structure@701658832.png" alt="Structure diagram" style="width: 100.0%;" /></figure><h3 id="initializing-process-and-threads">Initializing Process and Threads</h3><p>First, we need to initialize the processes and threads. Using <span class="codespan-content"><code>ph: &quot;M&quot;</code></span>, which stands for &ldquo;metadata&rdquo;.
@@ -218,12 +210,13 @@ In the chart, we set the &ldquo;GB/s&rdquo; parameter to 40 at <span class="code
   ]
 }</code></pre><p>The display effect is shown below. You can place two differently named events with overlapping times on the same <span class="codespan-content"><code>tid</code></span>,
 and both events will be displayed in the same area stacked vertically, rather than being separated.</p><figure><img src="media/nested@1545052838.jpg" alt="Nested events example" style="width: 100.0%;" /></figure><p>Good! 🎉 Until now, we cover all the basic elements for expressing trace events. I think it&rsquo;s far
-enough for most of the scenarios.</p><h2 id="pitfalls">Pitfalls</h2><p>There are some traps when using trace events that you should be aware of:</p><ol><li><p><strong>Time Unit Configuration</strong>: All time settings use nanoseconds (ns) as the unit. For the original <span class="codespan-content"><code>chrome://tracing</code></span>,
-you can force the <strong>display</strong> of event details to show nanoseconds by setting <span class="codespan-content"><code>&quot;displayTimeUnit&quot;: &quot;ns&quot;</code></span>.
-However, the timeline axis and other displays will still use milliseconds (ms), not nanoseconds.
-Therefore, when generating this data, you must use nanoseconds as the data standard, but be aware that
+enough for most of the scenarios.</p><h2 id="pitfalls">Pitfalls</h2><p>There are some traps when using trace events that you should be aware of:</p><ol><li><p><strong>Time Unit Configuration</strong>: <strong>All time settings use microseconds (µs) as the unit.</strong> For the original <span class="codespan-content"><code>chrome://tracing</code></span>,
+you can force the <strong>display</strong> of event details to show nanoseconds (ns) by setting <span class="codespan-content"><code>&quot;displayTimeUnit&quot;: &quot;ns&quot;</code></span>.
+However, the timeline axis and other displays will use milliseconds (ms) 🤯, neither nanoseconds nor microseconds.
+Therefore, when generating this data, you must use microseconds as the data standard, but be aware that
 the display uses milliseconds. Even if you set <span class="codespan-content"><code>&quot;displayTimeUnit&quot;: &quot;ns&quot;</code></span>, it only changes the internal
-information shown when you click on an event, not the external display.</p></li><li><p><strong>Time Normalization</strong>: The first <span class="codespan-content"><code>ts</code></span> value will be normalized to 0. Therefore, even if you set
+information shown when you click on an event, not the external display. This is definitely one of the
+most confusing design I&rsquo;ve encountered.</p></li><li><p><strong>Time Normalization</strong>: The first <span class="codespan-content"><code>ts</code></span> value will be normalized to 0. Therefore, even if you set
 the first event&rsquo;s <span class="codespan-content"><code>ts</code></span> to 100, the display will still show it starting at 0. This is because the trace viewer
 was originally designed for use cases like web page operations and Android tracing, where timestamps often
 start at very high values. The leading empty space would be meaningless.</p></li></ol><hr /><h2 id="further-reading">Further Reading</h2><ul><li><a href="https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview">Trace Event Format Specification</a> - The official Google document detailing the complete trace event format</li><li><a href="https://www.chromium.org/developers/how-tos/trace-event-profiling-tool/">Chrome Tracing Documentation</a> - Chromium&rsquo;s official trace viewer website</li><li><a href="https://perfetto.dev/docs/">Perfetto Documentation</a> - The next-generation trace viewer tool</li></ul>
