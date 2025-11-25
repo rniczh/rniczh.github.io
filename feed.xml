@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+    <title>Hong-Sheng Zheng's Blog</title>
+    <link>https://rniczh.github.io/blog/</link>
+    <description>rniczh.github.io/blog: A leisurely afternoon stroll</description>
+    <language>en-us</language>
+    <atom:link href="https://rniczh.github.io/feed.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 25 Nov 2025 00:17:40 -0500</lastBuildDate>
+
+    <item>
+        <title>Simulating Time: How to Hand-Craft Chrome Trace Viewer JSON for Visualization</title>
+        <link>https://rniczh.github.io/blog/20251123-simulating-time-chrome-tracing-json/index.html</link>
+        <guid>https://rniczh.github.io/blog/20251123-simulating-time-chrome-tracing-json/index.html</guid>
+        <description>&lt;img src=&quot;https://rniczh.github.io/blog/20251123-simulating-time-chrome-tracing-json/media/20251122@-1409026192.jpg&quot; alt=&quot;Snow-covered railway&quot; style=&quot;max-width:100%;height:auto;&quot; /&gt;&lt;br/&gt;&lt;br/&gt;November 23, 2025</description>
+        <pubDate>Sun, 23 Nov 2025 12:00:00 -0500</pubDate>
+    </item>
+
+</channel>
+</rss>
