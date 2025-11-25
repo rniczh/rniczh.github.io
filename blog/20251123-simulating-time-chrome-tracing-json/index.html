@@ -32,6 +32,14 @@
         body.quarkdown-plain {
             margin: 2.5cm 2.5cm 2.5cm 2.5cm;
         }
+        /* Responsive handling */
+        @media screen and (max-width: 1023px) {
+            body.quarkdown-plain > main {
+                min-width: 80%;
+                max-width: 100%;
+            }
+        }
+
 
         body.quarkdown-slides .reveal {
             width: 8.5in;
@@ -161,12 +169,9 @@ You can read the full specification here: <a href="https://docs.google.com/docum
         { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 74000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 0 } },
 
         { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 77000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
-        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 85000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
-        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 87000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
-        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 95000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 0 } },
+        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 87000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 0 } },
 
         { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 98000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
-        { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 106000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } },
         { &quot;name&quot;: &quot;BW&quot;, &quot;ph&quot;: &quot;C&quot;, &quot;ts&quot;: 108000, &quot;pid&quot;: 0, &quot;tid&quot;: 4, &quot;args&quot;: { &quot;GB/s&quot;: 20 } }
     ]
 }</code></pre><h3 id="trace-event-parameters">Trace Event Parameters</h3><p>Each trace event has the following parameters:</p><ul><li><strong>name</strong>: The name of the event</li><li><strong>cat</strong>: Category. While not visually distinct, this is useful for filtering events with search.</li><li><strong>ph</strong>: Phase, which determines how to interpret this event (There are five common events)<ul><li><strong>&ldquo;X&rdquo;</strong>: Complete event with duration</li><li><strong>&ldquo;M&rdquo;</strong>: Metadata event</li><li><strong>&ldquo;C&rdquo;</strong>: Counter event</li><li><strong>&ldquo;B&rdquo;</strong>: Marks the beginning of an event.</li><li><strong>&ldquo;E&rdquo;</strong>: Marks the end of an event.</li></ul></li><li><strong>dur</strong>: Duration, the time spent on this event (used with phase &ldquo;X&rdquo;)</li><li><strong>ts</strong>: Timestamp in microseconds (µs).</li><li><strong>pid</strong>: Process ID</li><li><strong>tid</strong>: Thread ID</li><li><strong>args</strong>: Additional arguments/metadata for the event</li></ul><h3 id="structure-overview">Structure Overview</h3><p>The trace events structure is organized from top level down as: process → thread → event.
