@@ -32,14 +32,6 @@
         body.quarkdown-plain {
             margin: 2.5cm 2.5cm 2.5cm 2.5cm;
         }
-        /* Responsive handling */
-        @media screen and (max-width: 1023px) {
-            body.quarkdown-plain > main {
-                min-width: 80%;
-                max-width: 100%;
-            }
-        }
-
 
         body.quarkdown-slides .reveal {
             width: 8.5in;
@@ -62,7 +54,17 @@
 <body class="quarkdown quarkdown-plain">
 <aside id="margin-area-left" class="margin-area"></aside>
 <main>
-    <div class="page-margin-content page-margin-bottom-right" data-on-left-page="bottom-right" data-on-right-page="bottom-right"><p>November 23, 2025</p></div><h1 id="simulating-time-how-to-hand-craft-chrome-trace-viewer-json-for-visualization" data-decorative="">Simulating Time: How to Hand-Craft Chrome Trace Viewer JSON for Visualization</h1><blockquote><p>It&rsquo;s been a few months since I came to Toronto. The weather has cooled off a bit lately.
+    <style data-hidden="">#margin-area-left, #margin-area-right {
+    display: none !important;
+}
+body.quarkdown.quarkdown-plain {
+    justify-content: center !important;
+}
+body.quarkdown.quarkdown-plain > main {
+    max-width: 800px !important;   /* Maximum content width */
+    width: 90% !important;         /* Use 90% of available space */
+    margin: 0 auto !important;     /* Center horizontally */
+}</style><div class="page-margin-content page-margin-bottom-right" data-on-left-page="bottom-right" data-on-right-page="bottom-right"><p>November 23, 2025</p></div><h1 id="simulating-time-how-to-hand-craft-chrome-trace-viewer-json-for-visualization" data-decorative="">Simulating Time: How to Hand-Craft Chrome Trace Viewer JSON for Visualization</h1><blockquote><p>It&rsquo;s been a few months since I came to Toronto. The weather has cooled off a bit lately.
 Earlier this November, we experienced the earliest first snowfall here in the past 56 years.
 It&rsquo;s warmed up slightly since then, with an average temperature around 3°C to 6°C, pretty comfortable,
 just right for a hoodie and a light coat. By the way, I might need to buy another pair of snow boots.</p><p class="attribution">Hong-Sheng Zheng, November 23, 2025</p></blockquote><figure><img src="media/20251122@-1409026192.jpg" alt="Snow-covered railway" style="width: 100.0%;" /></figure><p>This post introduces a useful visualization tool for timeline tracing:
