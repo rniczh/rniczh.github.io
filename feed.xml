@@ -6,7 +6,15 @@
     <description>rniczh.github.io/blog: A leisurely afternoon stroll</description>
     <language>en-us</language>
     <atom:link href="https://rniczh.github.io/feed.xml" rel="self" type="application/rss+xml" />
-    <lastBuildDate>Tue, 25 Nov 2025 00:17:40 -0500</lastBuildDate>
+    <lastBuildDate>Sun, 07 Dec 2025 02:44:52 -0500</lastBuildDate>
+
+    <item>
+        <title>BCFS: Building Compiler From Scratch, The Beginning</title>
+        <link>https://rniczh.github.io/blog/20251206-building-compiler-from-scratch-the-beginning/index.html</link>
+        <guid>https://rniczh.github.io/blog/20251206-building-compiler-from-scratch-the-beginning/index.html</guid>
+        <description>&lt;img src=&quot;https://rniczh.github.io/blog/20251206-building-compiler-from-scratch-the-beginning/media/draw@1512770273.jpg&quot; alt=&quot;draw&quot; style=&quot;max-width:100%;height:auto;&quot; /&gt;&lt;br/&gt;&lt;br/&gt;Dec 6, 2025</description>
+        <pubDate>Sat, 06 Dec 2025 23:52:29 -0500</pubDate>
+    </item>
 
     <item>
         <title>Simulating Time: How to Hand-Craft Chrome Trace Viewer JSON for Visualization</title>
