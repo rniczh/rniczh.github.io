@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<!--suppress ALL -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Building Compiler From Scratch, The Beginning</title>
+    <script src="script/quarkdown.js"></script>
+    <script>const capabilities = window.quarkdownCapabilities</script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="theme/theme.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.9.0/highlightjs-line-numbers.min.js"></script>
+    <script src="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.css"/>
+    <script>capabilities.code = true;</script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap');
+
+        body {
+            --qd-main-custom-font: 'Inter';
+            --qd-code-custom-font: 'Source Code Pro';
+            --qd-main-font-size: 14.0pt;
+        }
+
+        .page-break {
+            break-before: always;
+        }
+
+        .quarkdown-plain .page-break {
+            break-before: avoid;
+            break-after: avoid;
+        }
+
+        body.quarkdown-plain {
+            margin: 2.5cm 2.5cm 2.5cm 2.5cm;
+        }
+
+        body.quarkdown-slides .reveal {
+            width: 8.5in;
+            height: 11.0in;
+        }
+
+        @page {
+            size: 8.5in 11.0in;
+            margin: 2.5cm 2.5cm 2.5cm 2.5cm;
+        }
+
+        p {
+        }
+    </style>
+    <script>
+        const doc = new PlainDocument();
+        prepare(doc);
+    </script>
+</head>
+<body class="quarkdown quarkdown-plain">
+<aside id="margin-area-left" class="margin-area"></aside>
+<main>
+    <style data-hidden="">:root {
+    --qd-code-block-font-size: 11pt;
+    --qd-code-block-font-size: 11pt;
+}
+
+/* Code block background */
+.quarkdown pre {
+    background-color: #f5f5f5;
+    padding: 0em;
+}
+
+.quarkdown pre code {
+    background-color: transparent;
+}
+
+/* Inline code styling - reduce padding and margin */
+.quarkdown .codespan-content {
+    margin: 0 0.1em;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+}
+
+/* Excel-style table */
+.quarkdown table:not(pre table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5em 0;
+    background-color: #fff;
+    border: 1px solid #d0d7de;
+}
+
+.quarkdown table:not(pre table) th {
+    background-color: #f6f8fa;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.6em 0.8em;
+    border: 1px solid #d0d7de;
+    color: #24292f;
+    line-height: 1.6;
+}
+
+.quarkdown table:not(pre table) td {
+    padding: 0.6em 0.8em;
+    border: 1px solid #d0d7de;
+    color: #24292f;
+    line-height: 1.6;
+}
+
+.quarkdown table:not(pre table) tr:hover {
+    background-color: #f6f8fa;
+}
+
+/* Reduce heading font sizes */
+.quarkdown h1 {
+    font-size: 2.2em !important;
+    --h-font-scale: 2.2;
+    background-color: transparent !important;
+}
+
+.quarkdown h2 {
+    font-size: 1.7em !important;
+    --h-font-scale: 1.7;
+}
+
+.quarkdown h3 {
+    font-size: 1.4em !important;
+    --h-font-scale: 1.4;
+}
+
+.quarkdown h4 {
+    font-size: 1.25em !important;
+    --h-font-scale: 1.25;
+}
+
+.quarkdown h5, .quarkdown h6 {
+    font-size: 1.15em !important;
+    --h-font-scale: 1.15;
+}
+
+/* Hide line numbers in code blocks
+.quarkdown .hljs-ln-numbers {
+    display: none !important;
+}
+*/
+
+/* Remove left border from plain blockquote */
+.quarkdown blockquote:not([class]) {
+    border-left: none !important;
+    font-family: "Georgia", "Times New Roman", "Times", serif;
+    font-style: italic;
+    padding-left: 1.5em !important;
+    color: #555;
+}
+
+/* Image lightbox effect */
+.quarkdown figure img,
+.quarkdown img {
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+
+/* Add onclick handler via CSS */
+.quarkdown figure img,
+.quarkdown img {
+    pointer-events: auto;
+}
+
+/* Fix sidebar: hidden text should not be clickable */
+.quarkdown .sidebar a {
+    overflow: hidden;
+    position: relative;
+}
+
+/* Completely hide and disable text when not hovering */
+.quarkdown .sidebar a:not(:hover) span {
+    pointer-events: none !important;
+    visibility: hidden;
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.quarkdown .sidebar a:hover span {
+    pointer-events: auto;
+    visibility: visible;
+    position: static;
+    opacity: 1;
+    width: auto;
+    height: auto;
+}
+
+/* Limit clickable area to only the visible line when not hovering */
+.quarkdown .sidebar a:not(:hover) {
+    clip-path: inset(0 0 0 0);
+}
+
+/* Lightbox modal */
+.image-lightbox {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    animation: fadeIn 0.3s;
+}
+
+.image-lightbox.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-lightbox img {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    animation: zoomIn 0.3s;
+    cursor: default;
+}
+
+.image-lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    transition: opacity 0.3s;
+}
+
+.image-lightbox-close:hover {
+    opacity: 0.7;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+#margin-area-left, #margin-area-right {
+    display: none !important;
+}
+body.quarkdown.quarkdown-plain {
+    justify-content: center !important;
+}
+body.quarkdown.quarkdown-plain > main {
+    max-width: 800px !important;   /* Maximum content width */
+    width: 90% !important;         /* Use 90% of available space */
+    margin: 0 auto !important;     /* Center horizontally */
+}
+
+/* Ensure images in row have consistent sizing and are centered */
+.quarkdown .stack-row {
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.quarkdown .stack-row p {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0.5cm;
+    width: 100%;
+    text-align: center !important;
+    margin: 0 auto !important;
+}
+
+.quarkdown .stack-row img {
+    display: inline-block !important;
+    vertical-align: middle !important;
+    margin: 0 auto !important;
+}
+
+.quarkdown .row figure {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+}
+
+.quarkdown .row figure img,
+.quarkdown .row img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto !important;
+}
+
+/* Beautiful horizontal rule */
+.quarkdown hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(to right, transparent, #d0d7de 20%, #d0d7de 80%, transparent);
+    margin: 2em 0;
+    width: 100%;
+}</style><div class="page-margin-content page-margin-bottom-right" data-on-left-page="bottom-right" data-on-right-page="bottom-right"><p>Dec 6, 2025</p></div><h1 id="bcfs-building-compiler-from-scratch-the-beginning" data-decorative="">BCFS: Building Compiler From Scratch, The Beginning</h1><blockquote><p>It&rsquo;s December! I should go buy a Christmas tree 🎄!
+Although the weather has gotten really cold, it feels like I&rsquo;m slowly getting used to it.</p><p class="attribution">Hong-Sheng Zheng, Dec 6, 2025</p></blockquote><figure><img src="media/draw@1512770273.jpg" alt="draw" style="width: 100.0%;" /></figure><p>I&rsquo;ve long wanted to write a series on building a compiler from scratch.
+Well, this post marks the beginning of that journey.
+While I cannot promise a rapid release schedule.
+I intend to explore topics in depth and expand the scope of this series as much as possible.
+Well, it&rsquo;s going to be a challenge, but let&rsquo;s give it a shot.</p><p>This series will feature complete <span class="codespan-content"><code>C++</code></span> code implementations without relying on existing compiler frameworks like <span class="codespan-content"><code>LLVM</code></span>.
+While frameworks are powerful, and most engineers typically wouldn&rsquo;t reinvent the wheel in practice,
+using them often abstracts away the low-level details that provide the most valuable learning opportunities.
+The goal of this series is to build a lightweight yet fully functional compiler.
+Although we&rsquo;re not using <span class="codespan-content"><code>LLVM</code></span>, we&rsquo;ll still reference its implementation.</p><blockquote class="note" style="--quote-type-label: 'Note';" data-labeled=""><p>For convenience, future posts in this series will be prefixed with <strong>BCFS</strong>
+(<strong>B</strong>uilding <strong>C</strong>ompiler <strong>F</strong>rom <strong>S</strong>cratch).</p></blockquote><h2 id="story">Story</h2><p>My own journey into compiler began in university when I&rsquo;m a undergraduated student.
+Back then, while studying, I came across quite a few books, but my favorite compiler book wasn&rsquo;t one
+of those everyone talks about like the <span class="codespan-content"><code>Dragon Book</code></span>, the one with the cover showing a knight sitting
+at a computer facing a dragon (later revised to they wielding a sword battling the dragon),
+or the <span class="codespan-content"><code>Whale Book</code></span> for compiler optimization, or <span class="codespan-content"><code>Engineering a Compiler</code></span>.
+By the way, <span class="codespan-content"><code>Engineering a Compiler</code></span> is also an excellent book,
+and its cover features the decorative design of the ceiling in Rice University&rsquo;s Duncan Hall auditorium.</p><div style="justify-content: center; align-items: center;" class="stack stack-row"><p><img src="media/compiler-book-0@-719210555.jpg" alt="Dragon Book" style="width: 30.5%;" />
+<img src="media/compiler-book-1@-715936700.jpg" alt="Whale Book" style="width: 30.0%;" />
+<img src="media/compiler-book-3@-716210874.jpg" alt="Engineering a Compiler Book" style="width: 32.2%;" /></p></div><p>Instead, my favorite compiler book is <span class="codespan-content"><code>A Retargetable C Compiler: Design and Implementation</code></span>.
+The reason is that it was the first one I could actually follow along with, step by step, line by line,
+to understand the design of all the various components a compiler needs.
+What initially surprised me the most back then was how it designed a symbol table
+to handle lexical scope. That&rsquo;s when I finally understood why dynamic scope, which had always felt
+the most counterintuitive to me, was actually the easiest to implement.</p><div style="justify-content: center; align-items: center;" class="stack stack-row"><figure><img src="media/compiler-book-2@-715307833.jpg" alt="Retargetable C Compiler Book" style="width: 100.0%;" /></figure></div><p>This series reflects that philosophy. We&rsquo;ll build a compiler step by step, learning both theory and
+practice along the way. But something different is that we will adopt the method described in
+<a href="http://scheme2006.cs.uchicago.edu/11-ghuloum.pdf">An Incremental Approach to Compiler Construction</a> written by Abdulaziz Ghuloum,
+who advocates learning compilers from the bottom up, starting from assembly
+or even the system&rsquo;s object/executable file formats, and working our way up to the source language.
+So, Yes! we&rsquo;ll start with <a href="https://wiki.osdev.org/ELF">ELF</a>, the object file format for Linux and manually construct our first executable.
+And we will target the ARM64 architecture. If you are on a non-ARM64 Linux environment, you can use <span class="codespan-content"><code>qemu-aarch64</code></span>.
+If you are on macOS (Apple Silicon), you can try the <a href="https://github.com/lima-vm/lima">lima</a>,
+which provide you an easier way to access Linux.</p><h2 id="overview">Overview</h2><p>To give readers a heads-up on what language we will be compiling, here&rsquo;s a quick overview:
+this series will not cover parsing. Therefore, for the source language, we&rsquo;ll use <span class="codespan-content"><code>Scheme</code></span>, a dialect of <span class="codespan-content"><code>Lisp</code></span>.
+<span class="codespan-content"><code>Scheme</code></span>&rsquo;s syntax is much simpler than that of other languages,
+as its <a href="https://en.wikipedia.org/wiki/S-expression">S-Expressions</a> directly represent the initial Abstract Syntax Tree (AST).​
+So it has a vastly simplifying implementation compared to languages requiring complex parsers.​</p><p>However, We will not be strictly adhering to any specific <span class="codespan-content"><code>Scheme</code></span> standard. Instead,
+the language will be kept as simple as possible, designed primarily to fit our needs,
+while still retaining the essence of <span class="codespan-content"><code>Scheme</code></span>&rsquo;s design. And to ensure type determinism,
+we will adopt the design principles of <span class="codespan-content"><code>Typed Scheme</code></span>. You can refer to this documentation for more details:
+<a href="https://cs.brown.edu/courses/cs173/2008/Manual/typed-scheme/index.html">Typed Scheme: Scheme with Static Types</a>.</p><p>Here is a simple recursive Fibonacci function to demonstrate what the language will look like.</p><pre><code class="language-scheme">(: fib (i64 -&gt; i64))
+(define fib (lambda (n)
+    (if (&lt; n 2)
+        n
+        (+ (fib (- n 1)) (fib (- n 2))))))</code></pre><p>And here is a visualization of what the AST for the <span class="codespan-content"><code>fib</code></span> function.</p><figure><img src="media/ast@-1460297739.png" alt="AST of fib" style="width: 400.0px;" /></figure><h2 id="whatrsquos-next">What&rsquo;s Next</h2><p>In the next post, we&rsquo;ll dive into the ELF format and learn how to manually construct an ELF executable from scratch.
+We&rsquo;ll build a minimal executable that runs on AArch64 hardware, understanding every piece of the binary structure along the way.
+A minimal ELF generator will be developed in the next post as well, which will serve as the interface
+for our compiler to generate AArch64 instructions and produce executable binaries with the Linker.</p><figure><img src="media/compiling@1263808579.png" alt="Compiling meme" style="width: 85.0%;" /></figure><script>
+// Image lightbox functionality
+(function() {
+    function initLightbox() {
+        // Check if already initialized
+        if (document.querySelector('.image-lightbox')) return;
+
+        // Create lightbox modal
+        const lightbox = document.createElement('div');
+        lightbox.className = 'image-lightbox';
+        lightbox.innerHTML = '<span class="image-lightbox-close">&times;</span><img src="" alt="">';
+        document.body.appendChild(lightbox);
+
+        const lightboxImg = lightbox.querySelector('img');
+        const closeBtn = lightbox.querySelector('.image-lightbox-close');
+
+        function openLightbox(img) {
+            lightboxImg.src = img.src;
+            lightboxImg.alt = img.alt || '';
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Use event delegation for all images
+        document.addEventListener('click', function(e) {
+            const img = e.target.closest('.quarkdown figure img, .quarkdown img');
+            if (img && !img.closest('.image-lightbox')) {
+                e.preventDefault();
+                openLightbox(img);
+            } else if (e.target === closeBtn || e.target === lightbox) {
+                closeLightbox();
+            }
+        });
+
+        // Close with ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+                closeLightbox();
+            }
+        });
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initLightbox);
+    } else {
+        initLightbox();
+    }
+})();
+</script><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/scheme.min.js"></script>
+<script>
+(function() {
+    function rehighlight() {
+        if (typeof hljs !== 'undefined' && hljs.highlightAll) {
+            hljs.highlightAll();
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(rehighlight, 200);
+        });
+    } else {
+        setTimeout(rehighlight, 200);
+    }
+})();
+</script>
+</main>
+<aside id="margin-area-right" class="margin-area"></aside>
+</body>
+</html>
