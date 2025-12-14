@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<!--suppress ALL -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Object File Generation and the ELF Format Part I</title>
+    <script src="script/quarkdown.js"></script>
+    <script>const capabilities = window.quarkdownCapabilities</script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="theme/theme.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.9.0/highlightjs-line-numbers.min.js"></script>
+    <script src="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.css"/>
+    <script>capabilities.code = true;</script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" integrity="sha384-5TcZemv2l/9On385z///+d7MSYlvIEw9FuZTIdZ14vJLqWphw7e7ZPuOiCHJcFCP" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js" integrity="sha384-cMkvdD8LoxVzGF/RPUKAcvmm49FQ0oxwDF3BGKtDXcEc+T1b2N+teh/OJfpU0jr6" crossorigin="anonymous"></script>
+    <script>
+        capabilities.math = true;
+
+        window.texMacros = {
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap');
+
+        body {
+            --qd-main-custom-font: 'Inter';
+            --qd-code-custom-font: 'Source Code Pro';
+            --qd-main-font-size: 14.0pt;
+        }
+
+        .page-break {
+            break-before: always;
+        }
+
+        .quarkdown-plain .page-break {
+            break-before: avoid;
+            break-after: avoid;
+        }
+
+        body.quarkdown-plain {
+            margin: 2.5cm 2.5cm 2.5cm 2.5cm;
+        }
+
+        body.quarkdown-slides .reveal {
+            width: 8.5in;
+            height: 11.0in;
+        }
+
+        @page {
+            size: 8.5in 11.0in;
+            margin: 2.5cm 2.5cm 2.5cm 2.5cm;
+        }
+
+        p {
+        }
+    </style>
+    <script>
+        const doc = new PlainDocument();
+        prepare(doc);
+    </script>
+</head>
+<body class="quarkdown quarkdown-plain">
+<aside id="margin-area-left" class="margin-area"></aside>
+<main>
+    <style data-hidden="">:root {
+    --qd-code-block-font-size: 11pt;
+    --qd-code-block-font-size: 11pt;
+}
+
+/* Code block background */
+.quarkdown pre {
+    background-color: #f5f5f5;
+    padding: 0em;
+    position: relative;
+}
+
+.quarkdown pre code {
+    background-color: transparent;
+}
+
+/* Code block reference text styling */
+.quarkdown pre[data-ref] {
+    margin-bottom: 1.5em !important;
+    padding-bottom: 0.5em !important;
+    overflow: visible !important;
+}
+
+.quarkdown pre .code-ref-text {
+    position: absolute !important;
+    bottom: -1.2em !important;
+    right: 0 !important;
+    font-size: 0.7em !important;
+    color: #888 !important;
+    font-style: italic !important;
+    pointer-events: none !important;
+    white-space: nowrap !important;
+    z-index: 10 !important;
+    line-height: 1.2 !important;
+}
+
+
+/* Heading subtitle styling - for date and author below h1 */
+.quarkdown .heading-subtitle {
+    display: block;
+    margin-top: -0.3em;
+    margin-bottom: 1em;
+    font-size: 1em !important;
+    color: #666 !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    line-height: 1.4;
+}
+
+.quarkdown h1 + .heading-subtitle,
+.quarkdown h1 + span.heading-subtitle {
+    display: block;
+    margin-top: -0.3em;
+    margin-bottom: 1em;
+    font-size: 1em !important;
+    color: #666 !important;
+    font-weight: normal !important;
+}
+
+/* Inline code styling - subtle and professional */
+.quarkdown .codespan-content {
+    margin: 0 0.1em;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    background-color: #f6f8fa;
+    color: #c92a2a;
+    border: 1px solid #d0d7de;
+    font-family: "Source Code Pro", "Monaco", "Menlo", "Consolas", monospace;
+    font-size: 0.9em;
+    font-weight: 400;
+}
+
+/* Excel-style table */
+.quarkdown table:not(pre table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5em 0;
+    background-color: #fff;
+    border: 1px solid #d0d7de;
+}
+
+.quarkdown table:not(pre table) th {
+    background-color: #f6f8fa;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.6em 0.8em;
+    border: 1px solid #d0d7de;
+    color: #24292f;
+    line-height: 1.6;
+}
+
+.quarkdown table:not(pre table) td {
+    padding: 0.6em 0.8em;
+    border: 1px solid #d0d7de;
+    color: #24292f;
+    line-height: 1.6;
+}
+
+.quarkdown table:not(pre table) tr:hover {
+    background-color: #f6f8fa;
+}
+
+/* Reduce heading font sizes */
+.quarkdown h1 {
+    font-size: 2.2em !important;
+    --h-font-scale: 2.2;
+    background-color: transparent !important;
+}
+
+.quarkdown h2 {
+    font-size: 1.7em !important;
+    --h-font-scale: 1.7;
+}
+
+.quarkdown h3 {
+    font-size: 1.4em !important;
+    --h-font-scale: 1.4;
+}
+
+.quarkdown h4 {
+    font-size: 1.25em !important;
+    --h-font-scale: 1.25;
+}
+
+.quarkdown h5, .quarkdown h6 {
+    font-size: 1.15em !important;
+    --h-font-scale: 1.15;
+}
+
+/* Hide line numbers in code blocks
+.quarkdown .hljs-ln-numbers {
+    display: none !important;
+}
+*/
+
+
+.quarkdown blockquote {
+    font-size: 0.9em !important;
+}
+
+/* Remove left border from plain blockquote */
+.quarkdown blockquote:not([class]) {
+    font-size: 1em !important;
+    border-left: none !important;
+    font-family: "Georgia", "Times New Roman", "Times", serif;
+    font-style: italic;
+    padding-left: 1.5em !important;
+    color: #555;
+}
+
+/* Image lightbox effect */
+.quarkdown figure img,
+.quarkdown img {
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+
+/* Add onclick handler via CSS */
+.quarkdown figure img,
+.quarkdown img {
+    pointer-events: auto;
+}
+
+/* Fix sidebar: hidden text should not be clickable */
+.quarkdown .sidebar a {
+    overflow: hidden;
+    position: relative;
+}
+
+/* Completely hide and disable text when not hovering */
+.quarkdown .sidebar a:not(:hover) span {
+    pointer-events: none !important;
+    visibility: hidden;
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.quarkdown .sidebar a:hover span {
+    pointer-events: auto;
+    visibility: visible;
+    position: static;
+    opacity: 1;
+    width: auto;
+    height: auto;
+}
+
+/* Reduce sidebar text size to prevent clipping */
+.quarkdown .sidebar a span {
+    font-size: 0.85em !important;
+    line-height: 1.3 !important;
+}
+
+/* Limit clickable area to only the visible line when not hovering */
+.quarkdown .sidebar a:not(:hover) {
+    clip-path: inset(0 0 0 0);
+}
+
+/* Lightbox modal */
+.image-lightbox {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    animation: fadeIn 0.3s;
+}
+
+.image-lightbox.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-lightbox img {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    animation: zoomIn 0.3s;
+    cursor: default;
+}
+
+.image-lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    transition: opacity 0.3s;
+}
+
+.image-lightbox-close:hover {
+    opacity: 0.7;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+#margin-area-left, #margin-area-right {
+    display: none !important;
+}
+body.quarkdown.quarkdown-plain {
+    justify-content: center !important;
+}
+body.quarkdown.quarkdown-plain > main {
+    max-width: 800px !important;   /* Maximum content width */
+    width: 90% !important;         /* Use 90% of available space */
+    margin: 0 auto !important;     /* Center horizontally */
+}
+
+/* Ensure images in row have consistent sizing and are centered */
+.quarkdown .stack-row {
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.quarkdown .stack-row p {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0.5cm;
+    width: 100%;
+    text-align: center !important;
+    margin: 0 auto !important;
+}
+
+.quarkdown .stack-row img {
+    display: inline-block !important;
+    vertical-align: middle !important;
+    margin: 0 auto !important;
+}
+
+.quarkdown .row figure {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+}
+
+.quarkdown .row figure img,
+.quarkdown .row img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto !important;
+}
+
+/* Beautiful horizontal rule */
+.quarkdown hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(to right, transparent, #d0d7de 20%, #d0d7de 80%, transparent);
+    margin: 2em 0;
+    width: 100%;
+}</style><h1 id="bcfs-object-file-generation-and-the-elf-format-mdash-part-i" data-decorative="">BCFS: Object File Generation and the ELF Format &mdash; Part I</h1><span class="heading-subtitle">Dec 14, 2025 · Hong-Sheng Zheng</span><blockquote><p>I built a strong wall that cannot be shaken with bitumen and baked bricks&hellip;
+I laid its foundation on the breast of the netherworld, and I built its top as high as a mountain.</p><p class="attribution">Nebuchadnezzar II (604–562 B.C.)</p></blockquote><figure><img src="media/elf-pic0-illustration-by-Hongsheng@494909304.jpg" alt="Draw" style="width: 100.0%;" /></figure><p>Hardware is the ultimate reality.
+While we may dream up sophisticated designs and optimizations for programming languages or compilers,
+even the most &lsquo;blue-sky&rsquo; abstractions must eventually touch the ground.
+They must materialize as instructions that hardware can actually execute.
+If a language&rsquo;s semantics detach from the physical realities of the underlying architecture&hellip;
+then it likely won&rsquo;t end well. For example,
+can you imagine a language for a systolic array AI engine attempting to handle matrix multiplication
+via pixel-wise <span class="codespan-content"><code>for</code></span> loops rather than tensor operations?</p><h2 id="object-files-and-the-road-to-execution">Object Files and the Road to Execution</h2><p>Before we jump into object file generation,
+let&rsquo;s first understand how an object file becomes an executable, and what exactly bridges the gap between them.
+In traditional compilers, which consist of a frontend and a backend,
+instruction selection typically marks the boundary between the two. Object file generation is essentially the final stage of the compiler.
+It produces the object file,
+and it&rsquo;s nearly ready to run, just one step away from becoming an executable, the <strong>Linking</strong> [1].
+Once linking is complete, the resulting binary contains everything needed for execution.
+The operating system then loads it into memory and starts running it.</p><figure><img src="media/object-file-in-compile-time-and-runtime-illustration-by-Hongsheng@-863363255.jpg" alt="Object File in Compile Time and Runtime" style="width: 100.0%;" /></figure><p>At first glance, you might picture this process simply: the compiler generates machine instructions,
+the linker glues them together with code from other object files or libraries into one long stream of machine code,
+and the OS loader drops that sequence somewhere in memory and starts executing from the top.</p><p>Hmmm&hellip; while that mental model isn&rsquo;t too far off, there are quite a few issues when you get into the details.
+Let&rsquo;s walk through them step by step to see what the problems are.
+Actually, we only need to answer two questions to understand roughly how the linker works.</p><p>➊ First, let&rsquo;s look into an example. In the code below, if you want to execute <span class="codespan-content"><code>printf</code></span>,
+where does <span class="codespan-content"><code>printf</code></span> come from? If you trace through <span class="codespan-content"><code>stdio.h</code></span>, you&rsquo;ll find it&rsquo;s just a function declaration sitting there,
+the actual implementation isn&rsquo;t anywhere in your code. Well, that&rsquo;s true, the implementation is probably in your glibc&rsquo;s <span class="codespan-content"><code>libc.so</code></span>.</p><span data-code-ref="hello.c"></span><pre><code class="language-c focus-lines" data-focus-start="3" data-focus-end="3">#include &lt;stdio.h&gt;
+int main() {
+    printf(&quot;Hello World\n&quot;);
+    return 0;
+}</code></pre><p>And in assembly, when you want to execute a function, a function call is essentially just a jump instruction
+(there&rsquo;s more to function calls, but let&rsquo;s not get into that now).
+But we don&rsquo;t know where <span class="codespan-content"><code>printf</code></span> is, how do we know where to jump? How do we know what address to use?</p><p>You might immediately think: if I have two object files, after I glue them together, as long as I can control where the loader loads my program into memory <em>(start_address)</em>,
+then I can find the location of the function I need from the other object file, and I can know the absolute position of the function I glued together <em>(start_address + offset)</em>,
+so I can just jump to that address! Indeed! You can glue them together. But there is a cost,
+the binary size will increase signficantly. You can try compiling the code above, once with <span class="codespan-content"><code>gcc hello.c -o hello.out</code></span> (dynamic linking by default),
+and once with <span class="codespan-content"><code>gcc hello.c -static -o hello_static.out</code></span> (which is called static linking).
+The size of the result binary from the first one will be roughly 16 KiB,
+while the static one will require 712 KiB. So most of the time, we won&rsquo;t use static linking, since it bloats the binary significantly, every program duplicates the same library code.
+And obviously, if we don&rsquo;t use static linking, the address that this instruction jumps to must be determined at some point.</p><blockquote class="note" style="--quote-type-label: 'Note';" data-labeled=""><p>However, in practice, most programs are compiled as position-independent executables (PIE)
+in major Linux distributions, and OS implement ASLR [2] by default, meaning the starting address is resolved at runtime rather than being statically fixed.</p></blockquote><p>Building on the previous question, ARM commonly uses an instruction <span class="codespan-content"><code>bl</code></span> for function calls,
+which is an instruction that can jump to the beginning of a function.
+The <span class="codespan-content"><code>bl</code></span> instruction encodes a 26-bit signed offset. Since ARM instructions are 4-byte aligned,
+this gives a maximum range of <formula>\pm 2^{25} \times 4</formula> bytes = <formula>\pm 128</formula> MiB.
+Wait! what happens if the function address is very far from the current location, beyond this range?
+You simply can&rsquo;t jump there.</p><figure><img src="media/bl-opcode@-2064455340.jpg" alt="BL Instruction Opcode" style="width: 80.0%;" /></figure><p>In practice, functions inside a single executable are usually much closer than 128 MiB,
+so this range limitation rarely becomes a problem.
+But what if the target does lie outside the <formula>\pm 128</formula> MiB range?
+A single <span class="codespan-content"><code>bl</code></span> instruction simply cannot reach it directly.</p><p>➋ So who&rsquo;s responsible for ensuring that no <span class="codespan-content"><code>bl</code></span> target falls outside the <formula>\pm 128</formula> MiB range?
+Does the compiler check this and prevent it somehow? Or is it the linker that steps in?
+You might think: ARM also has the <span class="codespan-content"><code>blr</code></span> (branch with link to register) instruction,
+which jumps to a full 64-bit address stored in a register. Wouldn&rsquo;t that give unlimited range?
+That&rsquo;s a good point! <span class="codespan-content"><code>blr</code></span> does indeed eliminate the range limit.
+However, using it requires first loading the 64-bit target address into a register,
+which typically takes two instructions: <span class="codespan-content"><code>adrp</code></span> and <span class="codespan-content"><code>add</code></span>.</p><pre><code class="language-armasm focus-lines" data-focus-start="1" data-focus-end="2">adrp    x17, func@PAGE         ; Load the page base (high bits)
+add     x17, x17, func@PAGEOFF ; Add the page offset (low bits)
+blr     x17                    ; Indirect call with link</code></pre><p>Compared to a single <span class="codespan-content"><code>bl</code></span>, this sequence increases code size (3 instructions instead of 1),
+and hurts performance: it adds extra instruction latency and, more importantly,
+turns the call into an indirect branch. Indirect branches are harder for the CPU to predict,
+leading to more branch mispredictions and higher penalties when they occur.
+For these reasons, modern toolchains strongly prefer the single instruction <span class="codespan-content"><code>bl</code></span> whenever possible.</p><hr /><h3 id="_1-where-does-printf-come-from">1. Where Does <span class="codespan-content"><code>printf</code></span> Come From?</h3><p>The answer to this question is called <strong>Relocation</strong>,
+It&rsquo;s not just about the <span class="codespan-content"><code>printf</code></span> function, any reference that requires a memory address faces the same challenge.
+This includes global variables, functions defined in other source files, symbols from static or dynamic libraries&hellip;
+and even the address of a simple string literal like <span class="codespan-content"><code>&quot;Hello World&quot;</code></span>. At compile time, the compiler has no way of knowing where it will end up in the final binary,
+so the resolution of these addresses must be deferred.
+This process relies heavily on the cooperation between the linker (the static linker) and the loader (the dynamic loader, <span class="codespan-content"><code>ld.so</code></span> on Linux).
+From the compiler&rsquo;s perspective, it knows it needs to emit a <span class="codespan-content"><code>bl</code></span> instruction, but it doesn&rsquo;t know the target address.
+So it temporarily fills in an offset of 0 as a placeholder.
+At the same time, it records two critical pieces of information in the object file to hand off to the next stage, the linker:</p><ol><li><strong>Symbol Table (.symtab)</strong>: This table lists all symbols in the current file along with their status. It marks the <span class="codespan-content"><code>puts</code></span> as <span class="codespan-content"><code>UND</code></span> (Undefined).</li><li><strong>Relocation Table (.rela.text)</strong>: This table records exactly which instructions need to be patched later. The location of the instruction (offset within the <span class="codespan-content"><code>.text</code></span> section).
+the relocation type (e.g., <span class="codespan-content"><code>R_AARCH64_CALL26</code></span>, which tells the linker: This is a <span class="codespan-content"><code>bl</code></span> instruction, needed to patch the 26-bit offset&rdquo;), and the name of the symbol to be resolved (e.g., <span class="codespan-content"><code>puts</code></span>)</li></ol><figure><img src="media/object_file_before_link@-1231702822.jpg" alt="BL Instruction Opcode" style="width: 80.0%;" /></figure><p>And that&rsquo;s the full extent of the compiler&rsquo;s responsibility when it comes to address resolution. Now we are good to continue to see what linker does for us.</p><blockquote class="note" style="--quote-type-label: 'Note';" data-labeled=""><p>When GCC detects that <span class="codespan-content"><code>printf</code></span> is only printing a plain string, it automatically optimizes it to <span class="codespan-content"><code>puts</code></span>.
+You may be wondering: how is this possible? It&rsquo;s a function, so how can the compiler know the semantics of this function and replace it with another function?</p><pre><code>#include &lt;stdio.h&gt;
+int printf(const char* format, ...) {
+    return 42;
+}
+int main() {
+
+    printf(&quot;Why it print this line?\n&quot;);
+    fprintf(stderr, &quot;Done\n&quot;);
+    return 0;
+}</code></pre><p>Actually, it doesn&rsquo;t know. It gets replaced with <span class="codespan-content"><code>puts</code></span> just based on the function signature in IR [3].
+You can compile it with <span class="codespan-content"><code>gcc &lt;filename&gt; -o a.out</code></span> and try running it.</p></blockquote><p>The task is now handed over to the linker. The linker will solve what it can, delegate the rest.
+Once The linker receives all the object files and any specified libraries, it attempts to resolve these relocations.
+If <span class="codespan-content"><code>puts</code></span> just comes from a static library (e.g., <span class="codespan-content"><code>libc.a</code></span>), the linker can locate it, calculate the correct offset, and patch the <span class="codespan-content"><code>bl</code></span> instruction directly.
+However, if <span class="codespan-content"><code>puts</code></span> resides in <span class="codespan-content"><code>libc.so</code></span>. The linker cannot determine the final runtime address because the shared library is loaded only at runtime,
+and its base address may vary due to ASLR [2].</p><p>At this point, the linker cannot fill in the real address, but it performs a crucial transformation:
+it rewrites the program into a form that can be resolved at runtime.
+It generates the following key structures in the final executable:</p><ol><li><p><strong>Dynamic Symbol Table (.dynsym)</strong>:
+A stripped-down symbol table containing only
+the symbols that require runtime resolution (e.g., <span class="codespan-content"><code>puts</code></span>).
+Each entry records the symbol name (pointing into <span class="codespan-content"><code>.dynstr</code></span>, not shown here), type, and other metadata.</p></li><li><p><strong>Global Offset Table (.got)</strong>:
+GOT, A table of addresses, with one entry per external function.</p></li><li><p><strong>Procedure Linkage Table (.plt)</strong>:
+PLT, A series of small code stubs, one for each external function.
+The original <span class="codespan-content"><code>bl 0</code></span> is rewritten to jump to the corresponding PLT stub.</p></li><li><p><strong>Relocation Table (.rela.plt)</strong>:
+It&rsquo;s not shown here, but this is the critical piece that tells the dynamic linker how to resolve symbols.
+Each entry specifies:</p><ul><li><strong>Offset</strong>: Which GOT entry to patch (e.g., <span class="codespan-content"><code>0x1ffc8</code></span> for <span class="codespan-content"><code>puts</code></span>)</li><li><strong>Type</strong>: What kind of relocation (<span class="codespan-content"><code>R_AARCH64_JUMP_SLOT</code></span> for lazy binding)</li><li><strong>Symbol</strong>: Which symbol to resolve (index into <span class="codespan-content"><code>\.dynsym</code></span> pointing to &ldquo;puts&rdquo;)
+Without <span class="codespan-content"><code>\.rela.plt</code></span>, the dynamic linker wouldn&rsquo;t know that address of GOT entry
+corresponds to the symbol &ldquo;puts&rdquo; in &ldquo;libc.so.6&rdquo;.</li></ul></li></ol><h4 id="well-letrsquos-step-by-step-to-see-what-happen-then">Well, let&rsquo;s step by step to see what happen then:</h4><p>If you trace the generated executable using <span class="codespan-content"><code>objdump</code></span> and <span class="codespan-content"><code>readelf</code></span>, you&rsquo;ll notice that
+when executing <span class="codespan-content"><code>puts</code></span>, the process jumps to a GOT entry (<span class="codespan-content"><code>0x1ffa0</code></span> here) with a value of 0.
+Actually, when the program starts, the dynamic linker first initializes <span class="codespan-content"><code>0x1ffa0</code></span> in GOT
+with the address of <span class="codespan-content"><code>_dl_runtime_resolve</code></span>, which is used to resolve the address at runtime.</p><figure><img src="media/linked-program@1215799251.jpg" alt="BL Instruction Opcode" style="width: 90.0%;" /></figure><ol><li>Fir jump to <span class="codespan-content"><code>puts@plt</code></span> (<span class="codespan-content"><code>0x650</code></span>)</li><li>Load address from <span class="codespan-content"><code>0x1ffc8</code></span> and gets <span class="codespan-content"><code>0x5f0</code></span> (PLT header)</li><li>Jump to PLT header, which calls <span class="codespan-content"><code>_dl_runtime_resolve</code></span> via <span class="codespan-content"><code>0x1ffa0</code></span></li><li><span class="codespan-content"><code>_dl_runtime_resolve</code></span> uses <span class="codespan-content"><code>.rela.plt</code></span> to find that <span class="codespan-content"><code>0x1ffc8</code></span> needs <span class="codespan-content"><code>&quot;puts@GLIBC_2.17&quot;</code></span></li><li>Resolves the real address and patches <span class="codespan-content"><code>0x1ffc8</code></span></li><li>Subsequent calls jump directly to the real <span class="codespan-content"><code>puts</code></span></li></ol><p>Now we have a clear picture of where <span class="codespan-content"><code>printf</code></span> comes from 😃 and what role the compiler plays.
+Looking at the final executable, you&rsquo;ll notice additional components that aren&rsquo;t typically
+considered during compiler design, things like <span class="codespan-content"><code>.rela.plt</code></span>, <span class="codespan-content"><code>.dynsym</code></span>, <span class="codespan-content"><code>.got</code></span>, and <span class="codespan-content"><code>.plt</code></span>.
+These are structures you&rsquo;ll run into when debugging, even though they&rsquo;re generated by the linker
+and dynamic linker rather than the compiler itself.</p><h3 id="_2-whorsquos-responsible-for-ensuring-that-no-bl-target-falls-outside-the-mib-range">2. Who&rsquo;s Responsible for Ensuring That No <span class="codespan-content"><code>bl</code></span> Target Falls Outside the <formula>\pm 128</formula> MiB Range</h3><p>Actually, the compiler does not take responsibility for preventing this situation,
+it simply generates a <span class="codespan-content"><code>bl</code></span> instruction assuming the target will be within range,
+and leaves the final code layout to the linker. The linker is responsible for
+adjusting sections, offsets, and other layout details. When it detects during
+layout that a branch target is too far away, it inserts a small intermediate
+code stub known as a <strong>veneer</strong>.</p><p>This veneer is placed near the original call site to ensure the initial <span class="codespan-content"><code>bl</code></span>
+to the veneer stays within range, and it uses a sequence of instructions
+, typically <span class="codespan-content"><code>adrp</code></span>, <span class="codespan-content"><code>add</code></span> and <span class="codespan-content"><code>br</code></span>, to load the full 64-bit address and
+perform an unconditional jump.</p><pre><code class="language-armasm">    ...
+
+    ; Original call site (too far from target)
+    bl  far_function_veneer                ; Jump to veneer (within range)
+
+    ...
+
+    ; Veneer stub (inserted by linker near the call site)
+far_function_veneer:
+    adrp    x17, far_function@PAGE         ; Load page base (high bits)
+    add     x17, x17, far_function@PAGEOFF ; Add page offset (low bits)
+    br      x17                            ; Jump to real target</code></pre><p>Thanks to veneers, This issue is almost never a problem, even in
+very large binaries. In practice, functions within a single executable are
+usually much closer than 128 MiB, so veneers rarely affect internal calls.
+The linker&rsquo;s automatic insertion of veneers ensures that even when a direct
+call exceeds the range, the program still functions correctly, at the cost of
+slightly larger code size and a minor performance penalty for the indirect
+jump through the veneer.</p><div class="page-break" data-hidden=""></div><h1 id="summary-and-whatrsquos-next">Summary and What&rsquo;s Next</h1><p>This article, Part 1, aims to clarify some questions we&rsquo;ll encounter when implementing the ELF generator in the next part.
+In the next post, we&rsquo;ll focus solely on the compiler&rsquo;s responsibilities, since Part 1 already explained which parts fall outside the compiler&rsquo;s scope and why.
+Part 2 will start to implement the tool for generating ELF file.</p><div class="page-break" data-hidden=""></div><h1 id="references">References</h1><div class="bibliography bibliography-plain"><span class="bibliography-entry-label">[1]</span><span class="bibliography-entry-content">Levine, John R.. <em>Linkers and Loaders</em>. Morgan Kaufmann Publishers Inc., San Francisco, CA, USA, 1999.</span><span class="bibliography-entry-label">[2]</span><span class="bibliography-entry-content">Shacham, Hovav, Page, Matthew, Pfaff, Ben, Goh, Eu-Jin, Modadugu, Nagendra, and Boneh, Dan. On the effectiveness of address-space randomization. 1581139616. Association for Computing Machinery. New York, NY, USA. 10.1145/1030083.1030124. Proceedings of the 11th ACM Conference on Computer and Communications Security. 298–307. 10. diversity, automated attacks, address-space randomization. Washington DC, USA. CCS '04. 2004. <a href="https://doi.org/10.1145/1030083.1030124">https://doi.org/10.1145/1030083.1030124</a>.</span><span class="bibliography-entry-label">[3]</span><span class="bibliography-entry-content">GCC. The reference code for printf to puts optimization based on function signature in IR. <a href="https://github.com/gcc-mirror/gcc/blob/7146cfc333e32ca25a7e39dfb60030157c7f8828/gcc/gimple-fold.cc#L3869">https://github.com/gcc-mirror/gcc/blob/7146cfc333e32ca25a7e39dfb60030157c7f8828/gcc/gimple-fold.cc#L3869</a>.</span></div><script>
+// Image lightbox functionality
+(function() {
+    function initLightbox() {
+        // Check if already initialized
+        if (document.querySelector('.image-lightbox')) return;
+
+        // Create lightbox modal
+        const lightbox = document.createElement('div');
+        lightbox.className = 'image-lightbox';
+        lightbox.innerHTML = '<span class="image-lightbox-close">&times;</span><img src="" alt="">';
+        document.body.appendChild(lightbox);
+
+        const lightboxImg = lightbox.querySelector('img');
+        const closeBtn = lightbox.querySelector('.image-lightbox-close');
+
+        function openLightbox(img) {
+            lightboxImg.src = img.src;
+            lightboxImg.alt = img.alt || '';
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Use event delegation for all images
+        document.addEventListener('click', function(e) {
+            const img = e.target.closest('.quarkdown figure img, .quarkdown img');
+            if (img && !img.closest('.image-lightbox')) {
+                e.preventDefault();
+                openLightbox(img);
+            } else if (e.target === closeBtn || e.target === lightbox) {
+                closeLightbox();
+            }
+        });
+
+        // Close with ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+                closeLightbox();
+            }
+        });
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initLightbox);
+    } else {
+        initLightbox();
+    }
+})();
+</script><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/scheme.min.js"></script>
+<script>
+(function() {
+    function rehighlight() {
+        if (typeof hljs !== 'undefined' && hljs.highlightAll) {
+            hljs.highlightAll();
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(rehighlight, 200);
+        });
+    } else {
+        setTimeout(rehighlight, 200);
+    }
+})();
+</script><script>
+// Code block reference text functionality
+(function() {
+    function initCodeRefs() {
+        // Find all elements with data-code-ref attribute and match them to code blocks
+        const refElements = document.querySelectorAll('[data-code-ref]');
+        refElements.forEach(function(refEl) {
+            // Skip if already processed
+            if (refEl.hasAttribute('data-ref-processed')) return;
+
+            const refText = refEl.getAttribute('data-code-ref');
+            if (!refText) return;
+
+            // Find the next pre element after this element
+            let nextSibling = refEl.nextElementSibling;
+            while (nextSibling) {
+                if (nextSibling.tagName === 'PRE') {
+                    nextSibling.setAttribute('data-ref', refText);
+                    refEl.style.display = 'none';
+                    refEl.setAttribute('data-ref-processed', 'true');
+                    break;
+                }
+                nextSibling = nextSibling.nextElementSibling;
+            }
+        });
+
+        // Find all code blocks with data-ref attribute and create display elements
+        const codeBlocks = document.querySelectorAll('.quarkdown pre[data-ref]');
+        codeBlocks.forEach(function(pre) {
+            // Skip if already processed
+            if (pre.hasAttribute('data-ref-processed')) return;
+
+            const refText = pre.getAttribute('data-ref');
+            if (refText && !pre.querySelector('.code-ref-text')) {
+                const refElement = document.createElement('span');
+                refElement.className = 'code-ref-text';
+                refElement.textContent = refText;
+                pre.appendChild(refElement);
+            }
+
+            pre.setAttribute('data-ref-processed', 'true');
+        });
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCodeRefs);
+    } else {
+        initCodeRefs();
+    }
+
+    // Also run after a short delay to catch dynamically loaded content
+    setTimeout(initCodeRefs, 100);
+
+    // Use MutationObserver to handle dynamically added code blocks
+    const observer = new MutationObserver(function(mutations) {
+        initCodeRefs();
+    });
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+})();
+</script><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/armasm.min.js"></script>
+<script>
+(function() {
+    function rehighlight() {
+        if (typeof hljs !== 'undefined' && hljs.highlightAll) {
+            hljs.highlightAll();
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(rehighlight, 200);
+        });
+    } else {
+        setTimeout(rehighlight, 200);
+    }
+})();
+</script>
+</main>
+<aside id="margin-area-right" class="margin-area"></aside>
+</body>
+</html>
