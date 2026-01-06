@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<!--suppress ALL -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Object File Generation and the ELF Format Part II</title>
+    <script src="script/quarkdown.js"></script>
+    <script>const capabilities = window.quarkdownCapabilities</script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="theme/theme.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.9.0/highlightjs-line-numbers.min.js"></script>
+    <script src="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.css"/>
+    <script>capabilities.code = true;</script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap');
+
+        body {
+            --qd-main-custom-font: 'Inter';
+            --qd-code-custom-font: 'Source Code Pro';
+            --qd-main-font-size: 14.0pt;
+        }
+
+        .page-break {
+            break-before: always;
+        }
+
+        .quarkdown-plain .page-break {
+            break-before: avoid;
+            break-after: avoid;
+        }
+
+        body.quarkdown-plain {
+            margin: 2.5cm 2.5cm 2.5cm 2.5cm;
+        }
+
+        body.quarkdown-slides .reveal {
+            width: 8.5in;
+            height: 11.0in;
+        }
+
+        @page {
+            size: 8.5in 11.0in;
+            margin: 2.5cm 2.5cm 2.5cm 2.5cm;
+        }
+
+        p {
+        }
+    </style>
+    <script>
+        const doc = new PlainDocument();
+        prepare(doc);
+    </script>
+</head>
+<body class="quarkdown quarkdown-plain">
+<aside id="margin-area-left" class="margin-area"></aside>
+<main>
+    <style data-hidden="">:root {
+    --qd-code-block-font-size: 11pt;
+    --qd-code-block-font-size: 11pt;
+}
+
+/* Code block background */
+.quarkdown pre {
+    background-color: #f5f5f5;
+    padding: 0em;
+    position: relative;
+}
+
+.quarkdown pre code {
+    background-color: transparent;
+}
+
+/* Code block reference text styling */
+.quarkdown pre[data-ref] {
+    margin-bottom: 1.5em !important;
+    padding-bottom: 0.5em !important;
+    overflow: visible !important;
+}
+
+.quarkdown pre .code-ref-text {
+    position: absolute !important;
+    bottom: -1.2em !important;
+    right: 0 !important;
+    font-size: 0.7em !important;
+    color: #888 !important;
+    font-style: italic !important;
+    pointer-events: none !important;
+    white-space: nowrap !important;
+    z-index: 10 !important;
+    line-height: 1.2 !important;
+}
+
+
+/* Heading subtitle styling - for date and author below h1 */
+.quarkdown .heading-subtitle {
+    display: block;
+    margin-top: -0.3em;
+    margin-bottom: 1em;
+    font-size: 1em !important;
+    color: #666 !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    line-height: 1.4;
+}
+
+.quarkdown h1 + .heading-subtitle,
+.quarkdown h1 + span.heading-subtitle {
+    display: block;
+    margin-top: -0.3em;
+    margin-bottom: 1em;
+    font-size: 1em !important;
+    color: #666 !important;
+    font-weight: normal !important;
+}
+
+/* Inline code styling - reduce padding and margin */
+.quarkdown .codespan-content {
+    margin: 0 0.1em;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+}
+
+/* Excel-style table */
+.quarkdown table:not(pre table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5em 0;
+    background-color: #fff;
+    border: 1px solid #d0d7de;
+}
+
+.quarkdown table:not(pre table) th {
+    background-color: #f6f8fa;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.6em 0.8em;
+    border: 1px solid #d0d7de;
+    color: #24292f;
+    line-height: 1.6;
+}
+
+.quarkdown table:not(pre table) td {
+    padding: 0.6em 0.8em;
+    border: 1px solid #d0d7de;
+    color: #24292f;
+    line-height: 1.6;
+}
+
+.quarkdown table:not(pre table) tr:hover {
+    background-color: #f6f8fa;
+}
+
+/* Reduce heading font sizes */
+.quarkdown h1 {
+    font-size: 2.2em !important;
+    --h-font-scale: 2.2;
+    background-color: transparent !important;
+}
+
+.quarkdown h2 {
+    font-size: 1.7em !important;
+    --h-font-scale: 1.7;
+}
+
+.quarkdown h3 {
+    font-size: 1.4em !important;
+    --h-font-scale: 1.4;
+}
+
+.quarkdown h4 {
+    font-size: 1.25em !important;
+    --h-font-scale: 1.25;
+}
+
+.quarkdown h5, .quarkdown h6 {
+    font-size: 1.15em !important;
+    --h-font-scale: 1.15;
+}
+
+/* Hide line numbers in code blocks
+.quarkdown .hljs-ln-numbers {
+    display: none !important;
+}
+*/
+
+
+.quarkdown blockquote {
+    font-size: 0.9em !important;
+}
+
+/* Remove left border from plain blockquote */
+.quarkdown blockquote:not([class]) {
+    font-size: 1em !important;
+    border-left: none !important;
+    font-family: "Georgia", "Times New Roman", "Times", serif;
+    font-style: italic;
+    padding-left: 1.5em !important;
+    color: #555;
+}
+
+/* Image lightbox effect */
+.quarkdown figure img,
+.quarkdown img {
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+
+/* Add onclick handler via CSS */
+.quarkdown figure img,
+.quarkdown img {
+    pointer-events: auto;
+}
+
+/* Fix sidebar: hidden text should not be clickable */
+.quarkdown .sidebar a {
+    overflow: hidden;
+    position: relative;
+}
+
+/* Completely hide and disable text when not hovering */
+.quarkdown .sidebar a:not(:hover) span {
+    pointer-events: none !important;
+    visibility: hidden;
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.quarkdown .sidebar a:hover span {
+    pointer-events: auto;
+    visibility: visible;
+    position: static;
+    opacity: 1;
+    width: auto;
+    height: auto;
+}
+
+/* Reduce sidebar text size to prevent clipping */
+.quarkdown .sidebar a span {
+    font-size: 0.85em !important;
+    line-height: 1.3 !important;
+}
+
+/* Limit clickable area to only the visible line when not hovering */
+.quarkdown .sidebar a:not(:hover) {
+    clip-path: inset(0 0 0 0);
+}
+
+/* Lightbox modal */
+.image-lightbox {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    animation: fadeIn 0.3s;
+}
+
+.image-lightbox.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-lightbox img {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    animation: zoomIn 0.3s;
+    cursor: default;
+}
+
+.image-lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    transition: opacity 0.3s;
+}
+
+.image-lightbox-close:hover {
+    opacity: 0.7;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+#margin-area-left, #margin-area-right {
+    display: none !important;
+}
+body.quarkdown.quarkdown-plain {
+    justify-content: center !important;
+}
+body.quarkdown.quarkdown-plain > main {
+    max-width: 800px !important;   /* Maximum content width */
+    width: 90% !important;         /* Use 90% of available space */
+    margin: 0 auto !important;     /* Center horizontally */
+}
+
+/* Ensure images in row have consistent sizing and are centered */
+.quarkdown .stack-row {
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.quarkdown .stack-row p {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0.5cm;
+    width: 100%;
+    text-align: center !important;
+    margin: 0 auto !important;
+}
+
+.quarkdown .stack-row img {
+    display: inline-block !important;
+    vertical-align: middle !important;
+    margin: 0 auto !important;
+}
+
+.quarkdown .row figure {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+}
+
+.quarkdown .row figure img,
+.quarkdown .row img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto !important;
+}
+
+/* Beautiful horizontal rule */
+.quarkdown hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(to right, transparent, #d0d7de 20%, #d0d7de 80%, transparent);
+    margin: 2em 0;
+    width: 100%;
+}
+
+/* Custom square list with hollow blue squares */
+.quarkdown .custom-square-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+.quarkdown .custom-square-list li {
+    position: relative;
+    padding-left: 1.5em;
+    margin-bottom: 0.5em;
+}
+.quarkdown .custom-square-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.4em;
+    width: 0.4em;
+    height: 0.4em;
+    border: 1.5px solid #1e3a8a;
+    background: transparent;
+}</style><h1 id="bcfs-object-file-generation-and-the-elf-format-mdash-part-ii" data-decorative="">BCFS: Object File Generation and the ELF Format &mdash; Part II</h1><span class="heading-subtitle">Jan 6, 2025 · Hong-Sheng Zheng</span><blockquote><p>The difference between the almost right word and the right word is really a large matter. &lsquo;tis the difference between the lightning bug and the lightning</p><p class="attribution">Mark Twain, letter to George Bainton, October 15, 1888</p></blockquote><figure><img src="media/compile-flow@-1130838952.jpg" alt="Compile Flow" style="width: 100.0%;" /></figure><p>A key piece that turns your program into an executable on Unix-like systems is the
+Executable and Linkable Format (ELF). Think of ELF as a standardized container for your code and data,
+a universal &ldquo;language&rdquo; that all tools can understand. Just like any PDF reader can open a PDF no matter what software created it.
+Compilers produce them, linkers merge multiple ones, debuggers extract symbol informations, and the OS loader maps them into memory.</p><p>Many folks might worry that crafting ELF files is a nightmare, fields everywhere,
+tiny mistakes can crash your program. And yeah, it&rsquo;s not trivial; you have to follow strict rules.
+But at the end of the day, it&rsquo;s just a file format. After working through this post,
+you&rsquo;ll have a foundation to build upon. You&rsquo;ll be able to understand how to debug your program,
+interpret information from tools like <span class="codespan-content"><code>readelf</code></span> and <span class="codespan-content"><code>objdump</code></span>, and most importantly,
+we&rsquo;ll have an interface to generate object files for our compiler!</p><hr /><p>In this post, we will build an ELF object file generator from scratch. Rather than drowning you in definitions upfront,
+we&rsquo;ll learn each concept as we need it. By the end, you&rsquo;ll have a working &ldquo;Hello World&rdquo; program
+generated entirely by our own code. The complete implementation is available in the
+<a href="https://github.com/rniczh/compiler-from-scratch">compiler-from-scratch</a> repository under the <span class="codespan-content"><code>ch1.1</code></span> directory.
+Note that code snippets in this post are simplified for clarity, please refer to the repository for the complete implementation.</p><figure><img src="media/draw@-1465603308.jpg" alt="Draw" style="width: 70.0%;" /></figure><h2 id="our-goal-a-working-ldquohello-worldrdquo">Our Goal: A Working &ldquo;Hello World&rdquo;</h2><p>Before diving into implementation details, let&rsquo;s be clear about what we&rsquo;re building.
+Our goal is to generate an object file <span class="codespan-content"><code>hello.o</code></span> that, when linked with <span class="codespan-content"><code>gcc</code></span>, produces a working executable:</p><pre><code class="language-shell">$ g++ main_hello.cpp obj_writer.cpp --std=c++20 -o gen
+$ ./gen                    # Run our generator to get `hello.o`
+$ gcc -o hello hello.o     # Link with system libraries
+$ ./hello                  # Run the program
+hello world</code></pre><p>The generated object file <span class="codespan-content"><code>hello.o</code></span> will contain a <span class="codespan-content"><code>main</code></span> function that calls <span class="codespan-content"><code>printf</code></span> to print &ldquo;hello world&rdquo;.
+This might sound simple, but it requires us to correctly generate:</p><ul><li>Machine code for ARM64 instructions</li><li>A string constant <span class="codespan-content"><code>hello world\n\0</code></span> in read-only data</li><li>Symbol information so the linker knows about <span class="codespan-content"><code>main</code></span> and <span class="codespan-content"><code>printf</code></span></li><li>Relocation entries so the linker can patch addresses</li></ul><p>Let&rsquo;s see what the final disassembly of <span class="codespan-content"><code>hello.o</code></span> will look like:</p><pre><code class="language-shell">$ objdump -d hello.o
+
+hello.o:        file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+0000000000000000 &lt;main&gt;:
+0:  a9bf7bfd      stp     x29, x30, [sp, #-0x10]!
+4:  910003fd      mov     x29, sp
+8:  90000000      adrp    x0, 0x0 &lt;main&gt;
+c:  91000000      add     x0, x0, #0x0
+10: 94000000      bl      0x10 &lt;main+0x10&gt;
+14: d2800000      mov     x0, #0x0                // =0
+18: a8c17bfd      ldp     x29, x30, [sp], #0x10
+1c: d65f03c0      ret</code></pre><p>You might notice something odd in the disassembly: the <span class="codespan-content"><code>bl</code></span> instruction shows <span class="codespan-content"><code>bl 0x10 &lt;main+0x10&gt;</code></span>,
+which appears to branch to itself. This happens because <span class="codespan-content"><code>bl</code></span> is a PC-relative instruction, and <span class="codespan-content"><code>objdump</code></span>
+calculates the target address as the current PC (<span class="codespan-content"><code>0x10</code></span>) plus the offset field (which is 0).
+Since the offset hasn&rsquo;t been filled in by the linker yet, <span class="codespan-content"><code>objdump</code></span> interprets it as &ldquo;branch to current location.&rdquo;</p><p>Similarly, the <span class="codespan-content"><code>adrp</code></span> and <span class="codespan-content"><code>add</code></span> instructions show <span class="codespan-content"><code>adrp x0, 0x0</code></span> and <span class="codespan-content"><code>add x0, x0, #0x0</code></span>, their immediate fields
+are also zero because they haven&rsquo;t been patched by the linker yet. These zeros in the <span class="codespan-content"><code>adrp</code></span>, <span class="codespan-content"><code>add</code></span>, and <span class="codespan-content"><code>bl</code></span> instructions
+are placeholders that the linker will fill in based on relocation entries.
+This is exactly what relocations are for, and we&rsquo;ll see how they work as we build our generator.</p><h2 id="the-big-picture-what-does-the-compiler-generate">The Big Picture: What Does the Compiler Generate?</h2><p>In <a href="https://rniczh.github.io/blog/20251214-Object-File-Generation-and-the-ELF-Format-Part-I/index.html">Part I</a>, we discussed
+how the linker resolves symbols and patches addresses. A key insight is that address resolution is not the compiler&rsquo;s job, the
+compiler simply leaves placeholders for the linker to handle later.
+So what exactly does the compiler produce? Let&rsquo;s look at the division of responsibilities:</p><figure><img src="media/elf-structure@-869452741.jpg" alt="ELF Structure and Responsibilities" style="width: 100.0%;" /></figure><p>The diagram shows which component creates each part of the ELF file.
+The blue regions are our responsibility as the compiler.
+We need to generate:</p><table><thead><tr><th>Section</th><th>Description</th></tr></thead><tbody><tr><td><span class="codespan-content"><code>.text</code></span></td><td>Machine instructions (code)</td></tr><tr><td><span class="codespan-content"><code>.rodata</code></span>, <span class="codespan-content"><code>.data</code></span>, <span class="codespan-content"><code>.bss</code></span></td><td>Constants and variables (data)</td></tr><tr><td><span class="codespan-content"><code>.symtab</code></span></td><td>Symbol table: what functions and variables exist</td></tr><tr><td><span class="codespan-content"><code>.rela.*</code></span></td><td>Relocation tables: what addresses need patching</td></tr><tr><td><span class="codespan-content"><code>.strtab</code></span>, <span class="codespan-content"><code>.shstrtab</code></span></td><td>String tables: names for symbols and sections</td></tr></tbody></table><p>The linker will later add more sections (like <span class="codespan-content"><code>.plt</code></span> and <span class="codespan-content"><code>.got</code></span> for dynamic linking) and create the program header table.
+The loader then uses these program headers to map everything into memory. But for now, let&rsquo;s focus on what we&rsquo;re building.</p><h2 id="setting-up-the-writer-framework">Setting Up: The Writer Framework</h2><p>Let&rsquo;s start with the skeleton of our object file writer. We&rsquo;ll build it incrementally, adding features as we need them.</p><figure><img src="media/draw-obj-writer@2059419270.jpg" alt="Draw Object Writer" style="width: 100.0%;" /></figure><span data-code-ref="obj_writer.h#L259"></span><pre><code class="language-cpp">namespace obj_writer {
+
+class Writer {
+private:
+    std::vector&lt;std::unique_ptr&lt;Section&gt;&gt; sections;
+    std::unordered_map&lt;std::string, size_t&gt; sectionNameToIndex;
+    std::vector&lt;elf::Elf64_Sym&gt; symbols;
+    StringTable strTable;
+
+public:
+    Writer();
+
+    size_t addSection(const std::string &amp;name, ...);
+    Section *getSection(const std::string &amp;name);
+    uint32_t addSymbol(const std::string &amp;name, ...);
+    void addRelocation(Section *sec, ...);
+    bool writeToFile(const std::string &amp;filename);
+};
+
+} // namespace obj_writer</code></pre><p>The <span class="codespan-content"><code>Writer</code></span> class will be our main interface. It manages sections, symbols, relocation, and ultimately writes the ELF file.
+But before we can write anything, we need to understand how binary data is stored.</p><h2 id="first-challenge-writing-binary-data-correctly">First Challenge: Writing Binary Data Correctly</h2><p>When writing machine code and data to a file, we immediately face a fundamental question:
+in what order do we write the bytes of a multi-byte value? Consider a 32-bit integer,
+it occupies 4 bytes in memory, but which byte comes first?
+There are two conventions:</p><ul><li><strong>Little-endian</strong>: The least significant byte (LSB) comes first</li><li><strong>Big-endian</strong>: The most significant byte (MSB) comes first</li></ul><p>The following figure illustrates how <span class="codespan-content"><code>0x12345678</code></span> is stored under each convention.
+In little-endian, the bytes appear as <span class="codespan-content"><code>78</code></span>, <span class="codespan-content"><code>56</code></span>, <span class="codespan-content"><code>34</code></span>, <span class="codespan-content"><code>12</code></span> where LSB at the lowest address.
+In big-endian, they appear as <span class="codespan-content"><code>12</code></span>, <span class="codespan-content"><code>34</code></span>, <span class="codespan-content"><code>56</code></span>, <span class="codespan-content"><code>78</code></span> where MSB at the lowest address.</p><figure><img src="media/endianness@1010609570.jpg" alt="Endianness" style="width: 80.0%;" /></figure><p>ARM64 uses <strong>little-endian</strong> byte order, which means the least signficant byte is stored at the lowest address.
+This might seem backwards at first, but it&rsquo;s how the hardware expects data to be laid out.
+When you inspect an ELF file with a hex editor, you&rsquo;ll see bytes in little-endian order.
+For example, the ARM64 <span class="codespan-content"><code>ret</code></span> instruction has the encoding <span class="codespan-content"><code>0xD65F03C0</code></span>.
+We can verify this with <span class="codespan-content"><code>readelf</code></span> or <span class="codespan-content"><code>xxd</code></span>:</p><span data-code-ref="readelf"></span><pre><code class="language-shell focus-lines" data-focus-start="5" data-focus-end="5">$ readelf -x .text hello.o
+
+Hex dump of section &#39;.text&#39;:
+0x00000000 fd7bbfa9 fd030091 00000090 00000091 .{..............
+0x00000010 00000094 000080d2 fd7bc1a8 c0035fd6 .........{...._.</code></pre><span data-code-ref="xxd"></span><pre><code class="language-shell">$ xxd hello.o
+...
+00000050: ... fd7b c1a8 c003 5fd6  .........{...._.
+...</code></pre><p>The bytes <span class="codespan-content"><code>C0</code></span>, <span class="codespan-content"><code>03</code></span>, <span class="codespan-content"><code>5F</code></span>, <span class="codespan-content"><code>D6</code></span> appear in reverse order compared to the encoding <span class="codespan-content"><code>0xD65F03C0</code></span>.
+This is also recorded in the ELF header itself. The <span class="codespan-content"><code>e_ident[5]</code></span> field tells readers what byte order the file uses:</p><span data-code-ref="obj_writer.cpp#L333"></span><pre><code class="language-cpp focus-lines" data-focus-start="3" data-focus-end="3">...
+ehdr.e_ident[4] = 2; // ELFCLASS64 (64-bit)
+ehdr.e_ident[5] = 1; // ELFDATA2LSB (little-endian)
+ehdr.e_ident[6] = 1; // EV_CURRENT (ELF version 1)
+...</code></pre><p>Since we&rsquo;re running on a little-endian machine (x86-64 or ARM64) and generating little-endian output,
+we might wonder do we even need to handle byte swapping? In practice, <strong>NO</strong>,
+but we included the logic anyway for education purpose. Understanding endianness is fundamental to systems programming.
+Here&rsquo;s our implementation:</p><span data-code-ref="obj_writer.h#L8"></span><pre><code class="language-cpp">namespace endian {
+
+enum class Endianness { little, big };
+
+// Detect host machine&#39;s endianness at startup
+static const Endianness hostEndian = []() {
+    uint32_t test = 1;
+    // If the first byte is 1, we&#39;re little-endian
+    return *reinterpret_cast&lt;uint8_t *&gt;(&amp;test) == 1
+        ? Endianness::little : Endianness::big;
+}();
+
+} // namespace endian</code></pre><p>We detect the endianness by creating an integer with value <span class="codespan-content"><code>1</code></span> and check which byte is non-zero.
+In little-endian, the value <span class="codespan-content"><code>0x00000001</code></span> is stored as <span class="codespan-content"><code>01</code></span>, <span class="codespan-content"><code>00</code></span>, <span class="codespan-content"><code>00</code></span>, <span class="codespan-content"><code>00</code></span>, so the first byte is <span class="codespan-content"><code>1</code></span>.
+In big-endian, it&rsquo;s stored as <span class="codespan-content"><code>00</code></span>, <span class="codespan-content"><code>00</code></span>, <span class="codespan-content"><code>00</code></span>, <span class="codespan-content"><code>01</code></span>, so the first byte is <span class="codespan-content"><code>0</code></span>.</p><p>We provide a helper function to handle endianness conversion. The <span class="codespan-content"><code>byteSwap</code></span> function checks if byte swapping is needed. For single-byte types or when the target endianness matches the host endianness,
+it simply returns the value unchanged. Otherwise, it reverses the byte order by treating the value as a byte array and using <span class="codespan-content"><code>std::reverse</code></span>.
+The <span class="codespan-content"><code>write</code></span> function combines byte swapping with memory writing, it first converts the value to the target endianness using <span class="codespan-content"><code>byteSwap</code></span>, then copies the converted bytes to the destination using <span class="codespan-content"><code>std::memcpy</code></span>.</p><span data-code-ref="obj_writer.h#L15"></span><pre><code class="language-cpp">namespace endian {
+
+template &lt;typename T&gt; T byteSwap(T value, Endianness targetEndian)
+{
+    // No swap needed for single bytes or matching endianness
+    if (sizeof(T) &lt;= 1 || targetEndian == hostEndian) {
+        return value;
+    }
+
+    // Reverse the bytes
+    T result = value;
+    uint8_t *bytes = reinterpret_cast&lt;uint8_t *&gt;(&amp;result);
+    std::reverse(bytes, bytes + sizeof(T));
+    return result;
+}
+
+template &lt;typename T&gt; void write(uint8_t *dst, T value, Endianness endian)
+{
+    T converted = byteSwap&lt;T&gt;(value, endian);
+    std::memcpy(dst, &amp;converted, sizeof(T));
+}
+
+} // namespace endian</code></pre><blockquote class="note" style="--quote-type-label: 'Note';" data-labeled=""><p>This is just one way to demonstrate the concept.
+If you look at <a href="https://llvm.org/doxygen/SwapByteOrder_8h_source.html">LLVM&rsquo;s implementation</a>, you&rsquo;ll find they also have <span class="codespan-content"><code>byteswap</code></span>,
+but they use native endianness detection directly, so there&rsquo;s no need for this kind of runtime check.</p></blockquote><h2 id="building-the-section-class">Building the Section Class</h2><p>Now that we can write bytes correctly, let&rsquo;s create a class to represent ELF sections.
+A section is simply a named chunk of binary data with some metadata.</p><span data-code-ref="obj_writer.h#L187"></span><pre><code class="language-cpp">class Section {
+public:
+    std::string name;           // Section name (e.g., &quot;.text&quot;, &quot;.rodata&quot;)
+    elf::Elf64_Word type;       // Section type
+    elf::Elf64_Xword flags;     // Section flags
+    elf::Elf64_Xword align;     // Alignment requirement
+    endian::Endianness endian;  // Byte order for this section
+
+    std::vector&lt;uint8_t&gt; data;  // The actual bytes
+    uint64_t virtualSize = 0;   // Size in memory (may differ from file size)
+
+    // ... methods ...
+};</code></pre><p>The <span class="codespan-content"><code>type</code></span> field tells tools what kind of data the section contains. The most common types are:</p><table><thead><tr><th>Type</th><th>Name</th><th>Description</th></tr></thead><tbody><tr><td><span class="codespan-content"><code>SHT_PROGBITS</code></span></td><td>Program data</td><td>Code or initialized data</td></tr><tr><td><span class="codespan-content"><code>SHT_NOBITS</code></span></td><td>No bits</td><td>Uninitialized data (<span class="codespan-content"><code>.bss</code></span>), takes no space in file</td></tr><tr><td><span class="codespan-content"><code>SHT_SYMTAB</code></span></td><td>Symbol table</td><td>Information about symbols</td></tr><tr><td><span class="codespan-content"><code>SHT_STRTAB</code></span></td><td>String table</td><td>Null-terminated strings</td></tr><tr><td><span class="codespan-content"><code>SHT_RELA</code></span></td><td>Relocations</td><td>Entries telling linker what to patch</td></tr></tbody></table><p>The <span class="codespan-content"><code>flags</code></span> field describes properties of the section:</p><table><thead><tr><th>Flag</th><th>Name</th><th>Meaning</th></tr></thead><tbody><tr><td><span class="codespan-content"><code>SHF_ALLOC</code></span></td><td>Allocate</td><td>Section occupies memory at runtime</td></tr><tr><td><span class="codespan-content"><code>SHF_WRITE</code></span></td><td>Writable</td><td>Section can be modified at runtime</td></tr><tr><td><span class="codespan-content"><code>SHF_EXECINSTR</code></span></td><td>Executable</td><td>Section contains machine instructions</td></tr></tbody></table><p>For example, <span class="codespan-content"><code>.text</code></span> (code) has flags <span class="codespan-content"><code>SHF_ALLOC | SHF_EXECINSTR</code></span>, it&rsquo;s loaded into memory and is executable.
+<span class="codespan-content"><code>.rodata</code></span> (read-only data) has just <span class="codespan-content"><code>SHF_ALLOC</code></span>, loaded but not writable or executable.
+<span class="codespan-content"><code>.bss</code></span> (uninitialized data) has <span class="codespan-content"><code>SHF_ALLOC | SHF_WRITE</code></span>, loaded, writable, but takes no space in the file.
+Now let&rsquo;s add methods to write data to a section:</p><span data-code-ref="obj_writer.h#L211,obj_writer.cpp#L12"></span><pre><code class="language-cpp">// Emit a numeric value with correct endianness
+template &lt;typename T&gt; void emit(T val)
+{
+    size_t pos = data.size();
+    data.resize(pos + sizeof(T));
+    endian::write&lt;T&gt;(&amp;data[pos], val, endian);
+    virtualSize += sizeof(T);
+}
+
+// Emit raw bytes (no endianness conversion)
+void emitBytes(const void *src, uint64_t len)
+{
+    size_t pos = data.size();
+    data.resize(pos + len);
+    std::memcpy(&amp;data[pos], src, len);
+    virtualSize += len;
+}</code></pre><p>The distinction between <span class="codespan-content"><code>emit</code></span> and <span class="codespan-content"><code>emitBytes</code></span> is important.
+Use <span class="codespan-content"><code>emit&lt;T&gt;()</code></span> for numeric values that need endianness conversion, like instructions or normal data.
+Use <span class="codespan-content"><code>emitBytes()</code></span> for raw data that&rsquo;s already in the right format, like strings. After then, we
+increase <span class="codespan-content"><code>virtualSize</code></span> to reflect the change of the offset in this section.</p><h2 id="creating-sections-in-the-writer">Creating Sections in the Writer</h2><p>Now we can start to implement section management in the <span class="codespan-content"><code>Writer</code></span> class:</p><span data-code-ref="obj_writer.cpp#L79"></span><pre><code class="language-cpp">Writer::Writer()
+{
+    // ELF requires a NULL section at index 0
+    addSection(&quot;&quot;, elf::SectionType::SHT_NULL, 0, 0, 0);
+
+    symbols.emplace_back();
+}</code></pre><p>The writer initialization creates a section with <span class="codespan-content"><code>SHT_NULL</code></span> type at index 0.
+ELF requires this NULL section as a sentinel value.
+When a symbol&rsquo;s <span class="codespan-content"><code>st_shndx</code></span> field is 0 (also called <span class="codespan-content"><code>SHN_UNDEF</code></span>), it indicates the symbol is undefined
+(not defined in this object file and must be resolved by the linker).
+We&rsquo;ll see this when we create the <span class="codespan-content"><code>printf</code></span> symbol, which will have <span class="codespan-content"><code>st_shndx = 0</code></span> because it&rsquo;s defined
+in the system&rsquo;s C library, not in our object file, we need the linker to figure it out.</p><span data-code-ref="obj_writer.h#L270"></span><pre><code class="language-cpp">size_t Writer::addSection(const std::string &amp;name, elf::Elf64_Word type,
+                          elf::Elf64_Xword flags, elf::Elf64_Xword align,
+                          elf::Elf64_Xword entsize)
+{
+    size_t idx = sections.size();
+    auto [it, inserted] = sectionNameToIndex.insert({name, idx});
+
+    if (inserted) {
+        sections.emplace_back(std::make_unique&lt;Section&gt;(
+            name, type, flags, align, entsize, endian));
+        return idx;
+    }
+
+    return it-&gt;second;
+}</code></pre><p>The <span class="codespan-content"><code>addSection</code></span> function creates a new section and returns its index. When a section with the given name
+doesn&rsquo;t exist yet, it creates the section and records the mapping from section name to its index in <span class="codespan-content"><code>sectionNameToIndex</code></span>.
+If the section already exists, it simply returns the existing index, avoiding duplicates.
+In essence, this function creates an empty section container that will later be populated with data via <span class="codespan-content"><code>emit</code></span> calls,
+or referenced by symbols through their <span class="codespan-content"><code>st_shndx</code></span> field, which stores the section index where the symbol is defined.</p><h2 id="our-first-section-for-the-string-ldquohello-worldrdquo">Our First Section for The String &ldquo;hello world&rdquo;</h2><p>Let&rsquo;s create our first real section: <span class="codespan-content"><code>.rodata.str1.1</code></span> to hold our &ldquo;hello world&rdquo; string.</p><figure><img src="media/hello@-1354664538.jpg" alt="Hello String" style="width: 70.0%;" /></figure><span data-code-ref="main_hello.cpp#L38"></span><pre><code class="language-cpp">obj_writer::Writer writer;
+
+// Create .rodata.str1.1 for string literals
+size_t rodataIdx = writer.addSection(
+    &quot;.rodata.str1.1&quot;,
+    SHT_PROGBITS,
+    SHF_ALLOC | SHF_MERGE | SHF_STRINGS,
+    1,  // alignment: 1 byte (strings don&#39;t need alignment)
+    1   // entry size: 1 (for mergeable string sections)
+);
+
+Section *rodata = writer.getSection(&quot;.rodata.str1.1&quot;);</code></pre><p>The flags <span class="codespan-content"><code>SHF_MERGE | SHF_STRINGS</code></span> tell the linker that this section contains null-terminated strings
+that can be merged with identical strings from other object files. This is a space optimization, if
+two source files both use the string &ldquo;hello&rdquo;, the linker only needs to keep one copy.</p><span data-code-ref="main_hello.cpp#L60"></span><pre><code class="language-cpp">std::string helloStr = &quot;hello world\n&quot;;
+uint64_t helloStrOffset = writer.emitData(rodata, helloStr);</code></pre><p>The <span class="codespan-content"><code>emitData</code></span> helper writes the string into the rodata section. It handles strings specially,
+writes the bytes and appends a null terminator.</p><span data-code-ref="obj_writer.h#L306"></span><pre><code class="language-cpp">template &lt;typename T&gt; uint64_t emitData(Section *sec, T &amp;&amp;val)
+{
+    using RawType = std::remove_cv_t&lt;std::remove_reference_t&lt;T&gt;&gt;;
+
+    if constexpr (std::is_same_v&lt;RawType, std::string&gt; ||
+                  std::is_same_v&lt;RawType, std::string_view&gt;) {
+        uint64_t offset = sec-&gt;virtSize();
+        sec-&gt;emitBytes(val.data(), val.size());
+        sec-&gt;emit&lt;uint8_t&gt;(0);  // Null terminator
+        return offset;
+    }
+    // ... handle other types ...
+}</code></pre><p>After this, our <span class="codespan-content"><code>.rodata.str1.1</code></span> section contains 13 bytes: <span class="codespan-content"><code>hello world\n\0</code></span>.
+The returned offset tells us where in the section our string starts, we&rsquo;ll need this for relocations.
+From the compiler&rsquo;s perspective, the address of this string is unknown at compile time.
+The linker will decide the final address layout when combining multiple object files, so we can only
+know the relative position (offset) within the section. When we later reference this string in our code,
+we&rsquo;ll use relocations to tell the linker: &ldquo;patch this instruction with the address of the string at offset X.&rdquo;</p><h2 id="the-code-section-writing-machine-instructions">The Code Section: Writing Machine Instructions</h2><p>The <span class="codespan-content"><code>.text</code></span> section contains our machine code, the actual executable instructions that the CPU will run.
+It&rsquo;s marked with <span class="codespan-content"><code>SHF_ALLOC | SHF_EXECINSTR</code></span> flags, meaning it will be loaded into memory and is executable.
+The alignment is 4 because ARM64 instructions must be 4-byte aligned.</p><span data-code-ref="main_hello.cpp#L36"></span><pre><code class="language-cpp">size_t textIdx = writer.addSection(
+    &quot;.text&quot;,
+    SHT_PROGBITS,
+    SHF_ALLOC | SHF_EXECINSTR,
+    4  // alignment: 4 bytes (ARM64 instructions are 4 bytes)
+);
+
+Section *text = writer.getSection(&quot;.text&quot;);</code></pre><h3 id="encoding-arm64-instructions">Encoding ARM64 Instructions</h3><p>Before we can emit instructions, we need to understand how ARM64 instructions are encoded.
+Unlike 32-bit ARM architectures that support both 32-bit and 16-bit THUMB instructions,
+ARM64 uses a fixed-length instruction format which every instruction is exactly 32 bits (4 bytes).
+The bits are divided into fields that specify the operation, registers, and immediate values.
+There are two official resources are highly recommended:
+the <a href="https://developer.arm.com/documentation/102374/0103">ARM64 Instruction Set Architecture Guide</a>
+and the <a href="https://developer.arm.com/documentation/111108/2025-12">ARM64 Instruction Encoding Reference</a>.</p><p>Let&rsquo;s look at some helper functions:</p><span data-code-ref="main_hello.cpp"></span><pre><code class="language-cpp">namespace arm64 {
+
+// Return from subroutine
+uint32_t ret() { return 0xD65F03C0; }
+
+// bl &lt;offset&gt; : Branch with link (function call)
+uint32_t bl() { return 0x94000000; }
+
+// adrp Xd, &lt;label&gt; : Load page address
+uint32_t adrp(uint8_t rd) {
+    return (1 &lt;&lt; 31) | (0b10000 &lt;&lt; 24) | rd;
+}
+
+// add Xd, Xn, #imm : Add immediate
+uint32_t add_imm(uint8_t rd, uint8_t rn) {
+    return (1 &lt;&lt; 31) | (0b0010001 &lt;&lt; 24) | (rn &lt;&lt; 5) | rd;
+}
+
+} // namespace arm64</code></pre><p>Notice that <span class="codespan-content"><code>bl()</code></span> returns <span class="codespan-content"><code>0x94000000</code></span>, the offset field is zero. Similarly, <span class="codespan-content"><code>adrp()</code></span> and <span class="codespan-content"><code>add_imm()</code></span> have
+their immediate fields set to zero. These are placeholders that the linker will fill in based on our relocation entries.</p><blockquote class="note" style="--quote-type-label: 'Note';" data-labeled=""><p>However, this approach has limitations: the hard-coded instruction encodings don&rsquo;t properly handle cases where
+immediate fields aren&rsquo;t used for relocations. In a later post,
+we&rsquo;ll build a complete operation table where operands strictly adhere to the ISA specification.</p></blockquote><h3 id="the-function-prologue">The Function Prologue</h3><p>Every function needs a prologue to set up its stack frame. On ARM64, this typically saves the frame pointer (<span class="codespan-content"><code>x29</code></span>)
+and link register (<span class="codespan-content"><code>x30</code></span>), then updates the frame pointer:</p><span data-code-ref="main_hello.cpp#L68"></span><pre><code class="language-cpp">// stp x29, x30, [sp, #-16]!   ; Save fp and lr, decrement sp by 16
+writer.emitInstruction(text, arm64::stp_pre_64(-2, 30, 31, 29));
+
+// mov x29, sp                  ; Set frame pointer to current sp
+writer.emitInstruction(text, arm64::add_imm(29, 31));</code></pre><p>The <span class="codespan-content"><code>stp</code></span> (store pair) instruction saves two registers at once. The <span class="codespan-content"><code>-2</code></span> means offset is <span class="codespan-content"><code>-16</code></span> bytes.
+The immediate is scaled by 8 for 64-bit registers. The <span class="codespan-content"><code>!</code></span> in assembly notation indicates pre-indexing,
+the stack pointer is decremented before the store.</p><p>You might notice that we use <span class="codespan-content"><code>add_imm</code></span>, but <span class="codespan-content"><code>objdump</code></span> displays it as <span class="codespan-content"><code>mov</code></span>. When we encode <span class="codespan-content"><code>add_imm(29, 31)</code></span>
+with immediate 0, it produces the machine code for <span class="codespan-content"><code>add x29, x31, #0</code></span> (where register 31 is <span class="codespan-content"><code>sp</code></span>).
+When you disassemble the object file with <span class="codespan-content"><code>objdump</code></span>, it recognizes this common pattern and displays it
+as the more readable <span class="codespan-content"><code>mov x29, sp</code></span> pseudo-instruction. The actual machine code is still <span class="codespan-content"><code>add x29, sp, #0</code></span>.</p><h3 id="inside-emitinstruction-three-critical-steps">Inside <span class="codespan-content"><code>emitInstruction</code></span>: Three Critical Steps</h3><p>The <span class="codespan-content"><code>emitInstruction</code></span> helper does more than just write bytes, it ensures correctness for ARM64 code generation.
+Let&rsquo;s examine each step:</p><span data-code-ref="obj_writer.cpp#L173"></span><pre><code class="language-cpp">void Writer::emitInstruction(Section *sec, uint32_t instr)
+{
+    // Step 1: Ensure 4-byte alignment
+    emitAlignment(sec, 4);
+
+    // Step 2: Mark this region as code (for ARM mapping symbols)
+    switchContent(sec, Section::ContentState::Code);
+
+    // Step 3: Write the instruction
+    sec-&gt;emit&lt;uint32_t&gt;(instr);
+}</code></pre><p><strong>Step 1: Alignment (<span class="codespan-content"><code>emitAlignment</code></span>)</strong></p><p>ARM64 requires instructions to be aligned to 4-byte boundaries. If you try to execute an instruction at
+an unaligned address (e.g., <span class="codespan-content"><code>0x1001</code></span> instead of <span class="codespan-content"><code>0x1000</code></span>), the CPU will raise an alignment fault and crash.</p><p>Why might we be unaligned? Consider a section that mixes code and data. If we emit a 5-byte string followed
+by an instruction, we&rsquo;d be at offset 5, not a multiple of 4. The <span class="codespan-content"><code>emitAlignment</code></span> function adds padding bytes
+to reach the next aligned offset:</p><span data-code-ref="obj_writer.cpp#L159"></span><pre><code class="language-cpp">void Writer::emitAlignment(Section *sec, uint64_t align)
+{
+    uint64_t currentOffset = sec-&gt;virtSize();
+    uint64_t padding = (align - (currentOffset % align)) % align;
+
+    if (sec-&gt;lastState == Section::ContentState::Code) {
+        // In code regions, pad with NOP instructions
+        sec-&gt;emitPadding(padding, 0xD503201F);  // ARM64 NOP
+    } else {
+        // In data regions, pad with zeros
+        sec-&gt;emitPadding(padding, 0x00);
+    }
+}</code></pre><p>Notice that we use different padding values depending on context:</p><ul><li><strong>In code regions</strong>: We pad with <span class="codespan-content"><code>NOP</code></span> instructions (<span class="codespan-content"><code>0xD503201F</code></span>). This is important because if the CPU
+somehow executes the padding, <span class="codespan-content"><code>NOP</code></span> does nothing harmful.</li><li><strong>In data regions</strong>: We just pad with zeros.</li></ul><p><strong>Step 2: Mapping Symbols (<span class="codespan-content"><code>switchContent</code></span>)</strong></p><p>ARM64 ELF files require special &ldquo;mapping symbols&rdquo; to mark transitions between code and data.
+This is specified in the <a href="https://github.com/ARM-software/abi-aa/blob/main/aaelf64/aaelf64.rst#565mapping-symbols">ARM ELF ABI&rsquo;s Mapping Symbols</a>:</p><blockquote><p>&ldquo;All mapping symbols have type <span class="codespan-content"><code>STT_NOTYPE</code></span> and binding <span class="codespan-content"><code>STB_LOCAL</code></span>. The st_size field is unused and must be zero.&rdquo;</p></blockquote><p>The mapping symbols are:</p><ul><li><span class="codespan-content"><code>$x</code></span> : marks the beginning of a sequence of ARM64 instructions</li><li><span class="codespan-content"><code>$d</code></span> : marks the beginning of a sequence of data</li></ul><p>A section might contain both code and inline data, like literal pools or jump tables.
+Without mapping symbols, disassemblers wouldn&rsquo;t know which bytes are instructions and which are data.
+They might try to disassemble data as code, producing garbage output.</p><span data-code-ref="obj_writer.cpp#L145"></span><pre><code class="language-cpp">void Writer::switchContent(Section *sec, Section::ContentState reqState)
+{
+    // Only emit a mapping symbol when the state actually changes
+    if (sec-&gt;lastState != reqState) {
+        std::string symName =
+            (reqState == Section::ContentState::Code) ? &quot;$x&quot; : &quot;$d&quot;;
+        addSymbol(symName,
+                  STB_LOCAL,            // symbol binding
+                  STT_NOTYPE,           // symbol type
+                  getSectionIndex(sec), // the index of the section
+                  sec-&gt;virtSize(),
+                  0 /* size: mapping symbols must have st_size = 0 */);
+        sec-&gt;lastState = reqState;
+    }
+}</code></pre><p>The function tracks the current state (code vs. data) and only emits a new mapping symbol when switching.
+For our &ldquo;Hello World&rdquo; example, when we first emit data to <span class="codespan-content"><code>.rodata.str1.1</code></span>, we emit a <span class="codespan-content"><code>$d</code></span> symbol at offset 0.
+And similarly, the first emit code to <span class="codespan-content"><code>.text</code></span>, we emit a <span class="codespan-content"><code>$x</code></span> symbol at offset 0.
+You can see these in the symbol table output:</p><pre><code class="language-shell">$ readelf -s hello.o
+   Num:    Value          Size Type    Bind   Vis      Ndx Name
+     2: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT    2 $d
+     3: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT    1 $x</code></pre><p>The <span class="codespan-content"><code>addSymbol</code></span> function creates a new entry in the symbol table, which we just covered in the next section,
+the <a href="#the-symbol-table-telling-the-linker-what-exists">The Symbol Table</a>.</p><p><strong>Step 3: Emit the Instruction (<span class="codespan-content"><code>sec-&gt;emit&lt;uint32_t&gt;</code></span>)</strong></p><p>Finally, we write the 4-byte instruction to the section&rsquo;s buffer using <span class="codespan-content"><code>emit&lt;T&gt;()</code></span>,
+which we already covered in the <a href="#building-the-section-class">Building the Section Class</a> section.</p><h2 id="the-symbol-table-telling-the-linker-what-exists">The Symbol Table: Telling the Linker What Exists</h2><p>So far we&rsquo;ve written code and data, but the linker doesn&rsquo;t know anything about them yet.
+We need to tell it about the symbols (names) in our program. This is what the symbol table is for.</p><p>Each symbol has several properties:</p><span data-code-ref="obj_writer.h#L84"></span><pre><code class="language-cpp">struct Elf64_Sym {
+    Elf64_Word st_name;     // Offset into string table
+    unsigned char st_info;  // Type and binding (packed into one byte)
+    unsigned char st_other; // Must be zero; reserved
+    Elf64_Half st_shndx;    // Section index where symbol is defined
+    Elf64_Addr st_value;    // Symbol value (usually offset within section)
+    Elf64_Xword st_size;    // Size of the symbol (e.g., function size)
+};</code></pre><p>The <span class="codespan-content"><code>st_info</code></span> field packs two pieces of information:</p><ul><li><strong>Binding</strong> (high 4 bits): Is it local, global, or weak</li><li><strong>Type</strong> (low 4 bits): Is it a function, variable, section, etc.</li></ul><table><thead><tr><th>Binding</th><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td><span class="codespan-content"><code>STB_LOCAL</code></span></td><td>0</td><td>Only visible within this file</td></tr><tr><td><span class="codespan-content"><code>STB_GLOBAL</code></span></td><td>1</td><td>Visible to other files</td></tr><tr><td><span class="codespan-content"><code>STB_WEAK</code></span></td><td>2</td><td>Like global, but can be overridden</td></tr></tbody></table><table><thead><tr><th>Type</th><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td><span class="codespan-content"><code>STT_NOTYPE</code></span></td><td>0</td><td>Not specified</td></tr><tr><td><span class="codespan-content"><code>STT_OBJECT</code></span></td><td>1</td><td>Data object (variable)</td></tr><tr><td><span class="codespan-content"><code>STT_FUNC</code></span></td><td>2</td><td>Function</td></tr><tr><td><span class="codespan-content"><code>STT_SECTION</code></span></td><td>3</td><td>Section (used for relocations)</td></tr></tbody></table><p>We use <span class="codespan-content"><code>addSymbol</code></span> helper function to create it.
+It will construct a symbol, put it into to the <span class="codespan-content"><code>symbols</code></span> and return its index.</p><span data-code-ref="obj_writer.cpp#L104"></span><pre><code class="language-cpp">uint32_t Writer::addSymbol(const std::string &amp;name, uint8_t bind, uint8_t type,
+                           uint16_t shndx, uint64_t value, uint64_t size)
+{
+    uint32_t index = symbols.size();
+    symbols.emplace_back();
+    elf::Elf64_Sym &amp;sym = symbols.back();
+
+    // st_name is the offset of the string in the string table
+    sym.st_name = name.empty() ? 0 : strTable.add(name);
+    sym.setBindingAndType(bind, type);
+    sym.st_other = 0;
+    sym.st_shndx = shndx;
+    sym.st_value = value;
+    sym.st_size = size;
+    return index;
+}</code></pre><p>For our &ldquo;Hello World&rdquo; program, we need three symbols,</p><span data-code-ref="main_hello.cpp#L49"></span><pre><code class="language-cpp">// 1. Section symbol for .rodata.str1.1
+// Used by relocations to reference the string section
+uint32_t symRodata = writer.addSymbol(
+    &quot;&quot;,                           // No name (section symbols are anonymous)
+    STB_LOCAL, STT_SECTION,       // Local, section type
+    rodataIdx,                    // Defined in .rodata.str1.1
+    0                             // Value: 0 (start of section)
+);
+
+// 2. The main function
+// This is what the linker looks for as the program entry point
+uint32_t symMain = writer.addSymbol(
+    &quot;main&quot;,                       // Name: &quot;main&quot;
+    STB_GLOBAL, STT_FUNC,         // Global function
+    textIdx,                      // Defined in .text
+    0                             // Value: 0 (offset in .text)
+);
+
+// 3. The printf function (external)
+// We call this but don&#39;t define it, the linker will help us to find it
+uint32_t symPrintf = writer.addSymbol(
+    &quot;printf&quot;,                     // Name: &quot;printf&quot;
+    STB_GLOBAL, STT_NOTYPE,       // Global, no specific type
+    SHN_UNDEF,                    // Section: UNDEFINED
+    0                             // Value: 0 (not defined here)
+);</code></pre><p>The critical difference is <span class="codespan-content"><code>symPrintf</code></span>&rsquo;s section index: <span class="codespan-content"><code>SHN_UNDEF</code></span> (0). This tells the linker that
+it need a symbol called <span class="codespan-content"><code>printf</code></span>, but it&rsquo;s not defined in this file.
+The linker will search through other object files and libraries until it finds <span class="codespan-content"><code>printf</code></span>
+(typically in libc). If it can&rsquo;t find it, you get the dreaded &ldquo;undefined reference&rdquo; error.</p><h2 id="string-tables-where-names-are-stored">String Tables: Where Names Are Stored</h2><p>You might have noticed that <span class="codespan-content"><code>Elf64_Sym::st_name</code></span> is an integer, not a string. ELF doesn&rsquo;t store
+symbol names directly in the symbol table. Instead, it stores offsets into a separate string table.</p><p>Why? Because many symbols share common prefixes or are duplicated across sections.
+A string table allows efficient storage and sharing of strings.</p><p>Our <span class="codespan-content"><code>StringTable</code></span> class handles this:</p><span data-code-ref="obj_writer.cpp#L53"></span><pre><code class="language-cpp">uint32_t StringTable::add(std::string s)
+{
+    // Empty string always at offset 0
+    if (s.empty()) {
+        return 0;
+    }
+
+    // Check if we&#39;ve seen this string before
+    if (auto it = cache.find(s); it != cache.end()) {
+        return it-&gt;second;  // Return cached offset
+    }
+
+    // Append the new string
+    size_t offset = data.size();
+    data.resize(offset + s.size() + 1);
+    std::memcpy(&amp;data[offset], s.data(), s.size());
+    data[offset + s.size()] = 0;  // Null terminator
+
+    cache.emplace(std::move(s), offset);
+    return static_cast&lt;uint32_t&gt;(offset);
+}</code></pre><p>The string table always starts with a null byte (empty string at offset 0). When we add a string,
+we append it followed by a null terminator, and return the offset where it starts.</p><p>There are actually two string tables in an ELF file:</p><ul><li><span class="codespan-content"><code>.strtab</code></span>: Holds symbol names</li><li><span class="codespan-content"><code>.shstrtab</code></span>: Holds section names</li></ul><p>Our <span class="codespan-content"><code>Writer</code></span> just only maintains <span class="codespan-content"><code>.strtab</code></span> internally and
+creates <span class="codespan-content"><code>.shstrtab</code></span> when writing the ELF file automatically.</p><h2 id="relocations-the-placeholders-for-the-linker">Relocations: The Placeholders for the Linker</h2><p>Now we come to the heart of how compilation works: relocations.
+Think of relocations as placeholders, that promises from the compiler to the linker
+that certain addresses need to be filled in later.</p><p>When we emit the <span class="codespan-content"><code>bl printf</code></span> instruction, we don&rsquo;t know where <span class="codespan-content"><code>printf</code></span> will end up in memory.
+The linker decides that later, after combining all object files. So we emit the instruction with
+a placeholder and add a relocation entry that says: &ldquo;Hey linker, please patch this location with the address of <span class="codespan-content"><code>printf</code></span>.&rdquo;</p><p>Each relocation entry contains:</p><span data-code-ref="obj_writer.h#L100"></span><pre><code class="language-cpp">struct Elf64_Rela {
+    Elf64_Addr r_offset;    // Where to patch (offset within section)
+    Elf64_Xword r_info;     // Symbol index + relocation type
+    Elf64_Sxword r_addend;  // Value to add to the symbol&#39;s address
+};</code></pre><p>The <span class="codespan-content"><code>r_info</code></span> field packs two values:</p><ul><li>Upper 32 bits: Index into the symbol table</li><li>Lower 32 bits: Relocation type, how to calculate and encode the value</li></ul><p>Different relocation types tell the linker how to compute the patch value.
+For a complete reference of AArch64 relocation types, see the <a href="https://github.com/ARM-software/abi-aa/blob/main/aaelf64/aaelf64.rst#relocation-types">ARM ELF ABI&rsquo;s Relocation Types</a>.
+We use the following types in our example:</p><table><thead><tr><th>Type</th><th>Name</th><th>Description</th></tr></thead><tbody><tr><td><span class="codespan-content"><code>R_AARCH64_CALL26</code></span></td><td>283</td><td>26-bit PC-relative offset for <span class="codespan-content"><code>bl</code></span> instruction</td></tr><tr><td><span class="codespan-content"><code>R_AARCH64_ADR_PREL_PG_HI21</code></span></td><td>275</td><td>High 21 bits of page address for <span class="codespan-content"><code>adrp</code></span></td></tr><tr><td><span class="codespan-content"><code>R_AARCH64_ADD_ABS_LO12_NC</code></span></td><td>277</td><td>Low 12 bits of address for <span class="codespan-content"><code>add</code></span></td></tr></tbody></table><h3 id="loading-the-string-address">Loading the String Address</h3><p>On ARM64, we can&rsquo;t load a 64-bit address in a single instruction. Instead, we use a two-instruction sequence:</p><ol><li><span class="codespan-content"><code>adrp x0, &lt;label&gt;</code></span> : Load the address of the 4KB page containing the label</li><li><span class="codespan-content"><code>add x0, x0, &lt;offset&gt;</code></span> : Add the offset within the page</li></ol><p>This is why we need two relocations for our string:</p><span data-code-ref="main_hello.cpp#L74"></span><pre><code class="language-cpp">// adrp x0, hello_str
+uint64_t adrpOffset = text-&gt;virtSize();
+writer.emitInstruction(text, arm64::adrp(0));
+writer.addRelocation(text, adrpOffset, symRodata,
+                     R_AARCH64_ADR_PREL_PG_HI21, helloStrOffset);
+
+// add x0, x0, :lo12:hello_str
+uint64_t addOffset = text-&gt;virtSize();
+writer.emitInstruction(text, arm64::add_imm(0, 0));
+writer.addRelocation(text, addOffset, symRodata,
+                     R_AARCH64_ADD_ABS_LO12_NC, helloStrOffset);</code></pre><p>The <span class="codespan-content"><code>addend</code></span> parameter (<span class="codespan-content"><code>helloStrOffset</code></span>) is added to the symbol&rsquo;s address. Since our string is at
+offset 0 in the <span class="codespan-content"><code>.rodata.str1.1</code></span> section, the addend is 0. But if we had multiple strings, each would
+have a different offset.</p><h3 id="calling-printf">Calling printf</h3><p>The <span class="codespan-content"><code>bl</code></span> (branch with link) instruction takes a 26-bit signed offset, allowing jumps of ±128 MB.
+The linker calculates this offset from the instruction&rsquo;s address to <span class="codespan-content"><code>printf</code></span>&rsquo;s address:</p><span data-code-ref="main_hello.cpp#L85"></span><pre><code class="language-cpp">// bl printf
+uint64_t blOffset = text-&gt;virtSize();
+writer.emitInstruction(text, arm64::bl());
+writer.addRelocation(text, blOffset, symPrintf,
+                     R_AARCH64_CALL26, 0);</code></pre><p>The <span class="codespan-content"><code>R_AARCH64_CALL26</code></span> relocation type tells the linker to calculate the PC-relative offset to the symbol,
+divide by 4 (since instructions are 4-byte aligned), and encode it in bits [25:0] of this instruction.
+And more importantly, don&rsquo;t forget the symbol <span class="codespan-content"><code>symPrintf</code></span> and <span class="codespan-content"><code>blOffset</code></span> (The start address of the instruction),
+otherwise the linker won&rsquo;t know which symbol this relocation refers to and where it needs to patch.</p><h2 id="the-function-epilogue-and-return">The Function Epilogue and Return</h2><p>After calling <span class="codespan-content"><code>printf</code></span>, we set the return value to 0 and restore the saved registers:</p><span data-code-ref="main_hello.cpp#L100"></span><pre><code class="language-cpp">// mov x0, #0                   ; Return 0
+writer.emitInstruction(text, 0xD2800000);
+
+// ldp x29, x30, [sp], #16      ; Restore fp and lr, increment sp
+writer.emitInstruction(text, arm64::ldp_post_64(2, 30, 31, 29));
+
+// ret                          ; Return to caller
+writer.emitInstruction(text, arm64::ret());</code></pre><p>The <span class="codespan-content"><code>ldp</code></span> (load pair) instruction is the inverse of <span class="codespan-content"><code>stp</code></span>: it restores the two registers and
+increments the stack pointer. The <span class="codespan-content"><code>ret</code></span> instruction jumps to the address in <span class="codespan-content"><code>x30</code></span> (the link register).</p><p>Finally, we update the <span class="codespan-content"><code>main</code></span> symbol&rsquo;s size so debuggers know where the function ends:</p><span data-code-ref="main_hello.cpp#L109"></span><pre><code class="language-cpp">uint64_t funcEnd = text-&gt;virtSize();
+writer.setSymbolSize(symMain, funcEnd - funcStart);</code></pre><h2 id="writing-the-elf-file">Writing the ELF File</h2><p>Now we have all the pieces: sections with code and data, symbols, and relocations.
+Let&rsquo;s see how <span class="codespan-content"><code>Writer::write()</code></span> assembles them into a valid ELF file.</p><h3 id="step-1-sort-symbols">Step 1: Sort Symbols</h3><p>ELF requires local symbols to come before global symbols in the symbol table. We need to sort them:</p><span data-code-ref="obj_writer.cpp#L205"></span><pre><code class="language-cpp">// Sort symbols: locals first, then globals
+std::vector&lt;size_t&gt; indices(symbols.size());
+std::iota(indices.begin(), indices.end(), 0);
+
+std::stable_sort(indices.begin(), indices.end(), [&amp;](size_t a, size_t b) {
+    // binding type: LOCAL &lt; GLOBAL
+    return symbols[a].getBinding() &lt; symbols[b].getBinding();
+});
+
+// Reorder and build old-to-new index mapping
+std::vector&lt;size_t&gt; oldToNew(symbols.size());
+std::vector&lt;Elf64_Sym&gt; sortedSymbols;
+for (size_t i = 0; i &lt; indices.size(); ++i) {
+    oldToNew[indices[i]] = i;
+    sortedSymbols.push_back(std::move(symbols[indices[i]]));
+}
+symbols = std::move(sortedSymbols);</code></pre><p>We also need to update all relocation entries to use the new symbol indices:</p><span data-code-ref="obj_writer.cpp#L222"></span><pre><code class="language-cpp">for (auto &amp;sec : sections) {
+    for (auto &amp;rela : sec-&gt;relocations) {
+        uint32_t oldSym = rela.getSymbol();
+        uint32_t type = rela.getType();
+        rela.setSymbolAndType(oldToNew[oldSym], type);
+    }
+}</code></pre><h3 id="step-2-create-meta-sections">Step 2: Create Meta Sections</h3><p>The writer automatically creates several meta sections that ELF requires:</p><span data-code-ref="obj_writer.cpp#L199"></span><pre><code class="language-cpp">// Section name string table
+size_t shstrtabIdx = addSection(&quot;.shstrtab&quot;, SHT_STRTAB, 0, 1);
+
+// Symbol string table
+size_t strtabIdx = addSection(&quot;.strtab&quot;, SHT_STRTAB, 0, 1);
+
+// Symbol table
+size_t symtabIdx = addSection(&quot;.symtab&quot;, SHT_SYMTAB, 0, 8, sizeof(Elf64_Sym));
+
+// Relocation sections for each section that has relocations
+for (size_t i = 0; i &lt; sections.size(); ++i) {
+    if (!sections[i]-&gt;relocations.empty()) {
+        std::string relaName = &quot;.rela&quot; + sections[i]-&gt;name;
+        addSection(relaName, SHT_RELA, SHF_INFO_LINK, 8, sizeof(Elf64_Rela));
+    }
+}</code></pre><p>For our &ldquo;Hello World&rdquo;, this creates:</p><table><thead><tr><th>Section</th><th>Description</th></tr></thead><tbody><tr><td><span class="codespan-content"><code>.shstrtab</code></span></td><td>Section names</td></tr><tr><td><span class="codespan-content"><code>.strtab</code></span></td><td>Symbol names</td></tr><tr><td><span class="codespan-content"><code>.symtab</code></span></td><td>The symbol table</td></tr><tr><td><span class="codespan-content"><code>.rela.text</code></span></td><td>Relocations for <span class="codespan-content"><code>.text</code></span></td></tr></tbody></table><p>Note that <span class="codespan-content"><code>.shstrtab</code></span> (section name string table) is handled differently from <span class="codespan-content"><code>.strtab</code></span> (symbol name string table).
+While <span class="codespan-content"><code>.strtab</code></span> is built incrementally as we add symbols, <span class="codespan-content"><code>.shstrtab</code></span> is populated automatically at write time
+by iterating through all sections and collecting their names:</p><span data-code-ref="obj_writer.cpp#L266"></span><pre><code class="language-cpp">// Build Section Name String Table
+StringTable shStrTab;
+std::vector&lt;uint32_t&gt; secNameOffsets(sections.size());
+for (size_t i = 0; i &lt; sections.size(); ++i) {
+    secNameOffsets[i] = shStrTab.add(sections[i]-&gt;name);
+}
+sections[shstrtabIdx]-&gt;data.assign(shStrTab.getBuffer().begin(),
+                                   shStrTab.getBuffer().end());
+sections[shstrtabIdx]-&gt;virtualSize = shStrTab.getBuffer().size();</code></pre><p>This approach makes sense because section names are only known after all sections have been created,
+including the meta sections themselves. The <span class="codespan-content"><code>secNameOffsets</code></span> array stores each section&rsquo;s name offset,
+which will be used when writing section headers.</p><h3 id="step-3-calculate-offsets">Step 3: Calculate Offsets</h3><p>Each section needs a file offset. We calculate these while respecting alignment requirements,
+and the actual data will be written to these offsets in the later step.</p><span data-code-ref="obj_writer.cpp#L277"></span><pre><code class="language-cpp">std::vector&lt;elf::Elf64_Shdr&gt; shdrs(sections.size());
+uint64_t currentOffset = sizeof(Elf64_Ehdr);  // Start after ELF header
+
+for (size_t i = 0; i &lt; sections.size(); ++i) {
+    auto &amp;sec = sections[i];
+
+    // Align current offset
+    if (sec-&gt;align &gt; 1) {
+        uint64_t padding =
+            (sec-&gt;align - (currentOffset % sec-&gt;align)) % sec-&gt;align;
+        currentOffset += padding;
+    }
+
+    shdrs[i].sh_offset = currentOffset;
+    shdrs[i].sh_size = sec-&gt;virtSize();
+    currentOffset += sec-&gt;fileSize();  // NOBITS sections have fileSize() = 0
+}</code></pre><h3 id="step-4-write-the-elf-header">Step 4: Write the ELF Header</h3><p>The ELF header is the first 64 bytes of the file and serves as the &ldquo;table of contents&rdquo; for the entire ELF file.
+It tells tools how to interpret the rest of the file.</p><span data-code-ref="obj_writer.cpp#L326"></span><pre><code class="language-cpp">Elf64_Ehdr ehdr = {};
+
+// Magic number: 0x7f &#39;E&#39; &#39;L&#39; &#39;F&#39;
+ehdr.e_ident[0] = 0x7f;
+ehdr.e_ident[1] = &#39;E&#39;;
+ehdr.e_ident[2] = &#39;L&#39;;
+ehdr.e_ident[3] = &#39;F&#39;;
+ehdr.e_ident[4] = 2;       // ELFCLASS64: 64-bit
+ehdr.e_ident[5] = 1;       // ELFDATA2LSB: Little-endian
+ehdr.e_ident[6] = 1;       // EV_CURRENT: ELF version 1
+
+ehdr.e_type = ET_REL;      // Relocatable object file
+ehdr.e_machine = 183;      // EM_AARCH64
+ehdr.e_version = 1;
+ehdr.e_shoff = currentOffset;            // Section headers at end of file
+ehdr.e_ehsize = sizeof(Elf64_Ehdr);
+ehdr.e_shentsize = sizeof(Elf64_Shdr);
+ehdr.e_shnum = sections.size();
+ehdr.e_shstrndx = shstrtabIdx;           // Which section has section names
+
+os.write(reinterpret_cast&lt;char *&gt;(&amp;ehdr), sizeof(ehdr));</code></pre><p>Let&rsquo;s break down each field:</p><p><strong>The <span class="codespan-content"><code>e_ident</code></span> array (16 bytes)</strong> — This is the ELF identification:</p><ul><li><span class="codespan-content"><code>e_ident[0..3]</code></span>: The magic number <span class="codespan-content"><code>0x7f</code></span>, <span class="codespan-content"><code>E</code></span>, <span class="codespan-content"><code>L</code></span>, <span class="codespan-content"><code>F</code></span>. Any tool can check these 4 bytes to quickly determine if a file is ELF format.</li><li><span class="codespan-content"><code>e_ident[4]</code></span>: File class. <span class="codespan-content"><code>2</code></span> means 64-bit (<span class="codespan-content"><code>ELFCLASS64</code></span>). Use <span class="codespan-content"><code>1</code></span> for 32-bit.</li><li><span class="codespan-content"><code>e_ident[5]</code></span>: Data encoding. <span class="codespan-content"><code>1</code></span> means little-endian (<span class="codespan-content"><code>ELFDATA2LSB</code></span>). Use <span class="codespan-content"><code>2</code></span> for big-endian.</li><li><span class="codespan-content"><code>e_ident[6]</code></span>: ELF version. Always <span class="codespan-content"><code>1</code></span> for the current specification.</li><li><span class="codespan-content"><code>e_ident[7..15]</code></span>: Padding, typically zeros.</li></ul><p><strong>File type and machine</strong>:</p><ul><li><span class="codespan-content"><code>e_type</code></span>: We use <span class="codespan-content"><code>ET_REL</code></span> for relocatable object files. We cannot use <span class="codespan-content"><code>ET_EXEC</code></span> (executable) because our object file still contains unresolved symbols (like <span class="codespan-content"><code>printf</code></span>) and relocations that need to be patched. Only after the linker resolves all symbols and assigns final virtual addresses can the file become an executable. Other values include <span class="codespan-content"><code>ET_DYN</code></span> for shared libraries (<span class="codespan-content"><code>.so</code></span> files).</li><li><span class="codespan-content"><code>e_machine</code></span>: <span class="codespan-content"><code>183</code></span> is <span class="codespan-content"><code>EM_AARCH64</code></span> for ARM64.</li></ul><p><strong>Section header information</strong>:</p><ul><li><span class="codespan-content"><code>e_shoff</code></span>: File offset where the section header table begins. We place it at the end of the file.</li><li><span class="codespan-content"><code>e_ehsize</code></span>: Size of this ELF header (64 bytes for ELF64).</li><li><span class="codespan-content"><code>e_shentsize</code></span>: Size of each section header entry (64 bytes for <span class="codespan-content"><code>Elf64_Shdr</code></span>).</li><li><span class="codespan-content"><code>e_shnum</code></span>: Number of section headers.</li><li><span class="codespan-content"><code>e_shstrndx</code></span>: Index of the section that contains section names (<span class="codespan-content"><code>.shstrtab</code></span>).</li></ul><p><strong>Fields we leave as zero</strong>:</p><ul><li><span class="codespan-content"><code>e_entry</code></span>: Entry point address. For object files, this is 0 because they&rsquo;re not directly executable.</li><li><span class="codespan-content"><code>e_phoff</code></span>, <span class="codespan-content"><code>e_phentsize</code></span>, <span class="codespan-content"><code>e_phnum</code></span>: Program header information. This is not our reponsibility to create them, so these are all 0.</li><li><span class="codespan-content"><code>e_flags</code></span>: Processor specific flags. For basic AArch64, this is 0.</li></ul><h3 id="step-5-write-section-data-and-headers">Step 5: Write Section Data and Headers</h3><p>Finally, we write each section&rsquo;s data, adding padding as needed, then the section header table at the end:</p><span data-code-ref="obj_writer.cpp"></span><pre><code class="language-cpp">// Write section contents
+for (size_t i = 1; i &lt; sections.size(); ++i) {
+    // NOBITS has no file data for .bss
+    if (sections[i]-&gt;type == SHT_NOBITS) continue;
+
+    // Add padding to reach required offset
+    uint64_t fpos = os.tellp();
+    if (shdrs[i].sh_offset &gt; fpos) {
+        std::vector&lt;char&gt; pad(shdrs[i].sh_offset - fpos, 0);
+        os.write(pad.data(), pad.size());
+    }
+
+    os.write(reinterpret_cast&lt;const char *&gt;(sections[i]-&gt;data.data()),
+             sections[i]-&gt;data.size());
+}
+
+// Write section header table
+os.write(reinterpret_cast&lt;char *&gt;(shdrs.data()),
+         sizeof(Elf64_Shdr) * shdrs.size());</code></pre><h2 id="testing-our-generator">Testing Our Generator</h2><p>Let&rsquo;s compile and run our generator:</p><pre><code class="language-shell">$ make
+g++ main_hello.cpp obj_writer.cpp --std=c++20 -o gen
+
+$ ./gen
+Successfully generated hello.o
+Run `gcc -o hello hello.o` to link the object file into an executable.</code></pre><p>We can inspect the generated file with standard tools:</p><pre><code class="language-shell">$ file hello.o
+hello.o: ELF 64-bit LSB relocatable, ARM aarch64, version 1 (SYSV), not stripped</code></pre><pre><code class="language-shell">$ readelf -h hello.o
+ELF Header:
+    Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00
+    Class:                             ELF64
+    Data:                              2&#39;s complement, little endian
+    Version:                           1 (current)
+    OS/ABI:                            UNIX - System V
+    ABI Version:                       0
+    Type:                              REL (Relocatable file)
+    Machine:                           AArch64
+    Version:                           0x1
+    Entry point address:               0x0
+    Start of program headers:          0 (bytes into file)
+    Start of section headers:          408 (bytes into file)
+    Flags:                             0x0
+    Size of this header:               64 (bytes)
+    Size of program headers:           0 (bytes)
+    Number of program headers:         0
+    Size of section headers:           64 (bytes)
+    Number of section headers:         7
+    Section header string table index: 3</code></pre><p>Let&rsquo;s look at the symbol table:</p><pre><code class="language-shell">$ readelf -s hello.o
+Symbol table &#39;.symtab&#39; contains 6 entries:
+Num:    Value          Size Type    Bind   Vis      Ndx Name
+    0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
+    1: 0000000000000000     0 SECTION LOCAL  DEFAULT    2 .rodata.str1.1
+    2: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT    2 $d
+    3: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT    1 $x
+    4: 0000000000000000    32 FUNC    GLOBAL DEFAULT    1 main
+    5: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND printf</code></pre><p>Notice <span class="codespan-content"><code>printf</code></span> has <span class="codespan-content"><code>Ndx: UND</code></span>, it&rsquo;s undefined, as expected. The linker will resolve it.</p><p>And the relocations:</p><pre><code class="language-shell">$ readelf -r hello.o
+Relocation section &#39;.rela.text&#39; at offset 0x150 contains 3 entries:
+  Offset          Info           Type           Sym. Value    Sym. Name + Addend
+000000000008  000100000113 R_AARCH64_ADR_PRE 0000000000000000 .rodata.str1.1 + 0
+00000000000c  000100000115 R_AARCH64_ADD_ABS 0000000000000000 .rodata.str1.1 + 0
+000000000010  00050000011b R_AARCH64_CALL26  0000000000000000 printf + 0</code></pre><p>Three relocations, exactly as we planned. Two for loading the string address (<span class="codespan-content"><code>adrp</code></span> + <span class="codespan-content"><code>add</code></span>).
+One for calling <span class="codespan-content"><code>printf</code></span> (<span class="codespan-content"><code>bl</code></span>).</p><p>Now let&rsquo;s link and run:</p><pre><code class="language-shell">$ gcc -o hello hello.o
+$ ./hello
+hello world</code></pre><p>Good! We&rsquo;ve generated a valid ELF object file entirely from scratch!</p><h2 id="key-takeaways">Key Takeaways</h2><p>If there&rsquo;s one thing I hope you take away from this post, it&rsquo;s that ELF isn&rsquo;t some mysterious black box.
+it&rsquo;s just a well-structured file format.
+Once you understand its components (headers, sections, symbols, relocations), the whole picture becomes clear.</p><figure><img src="media/draw-elf-of-the-lake@1047753146.jpg" alt="Draw ELF of the Lake" style="width: 80.0%;" /></figure><p>The compiler&rsquo;s role is surprisingly focused: we generate machine code, organize data and instructions into sections, create symbol tables, and leave relocation entries
+as placeholders for addresses we don&rsquo;t know yet. We&rsquo;re not trying to solve everything; we&rsquo;re just preparing the pieces for the linker to assemble.</p><p>Speaking of relocations, think of them as leaving notes for the linker: &ldquo;Hey, when you figure out where <span class="codespan-content"><code>printf</code></span> lives, patch this instruction with the right offset.&rdquo;
+This division of responsibility, compiler generates, linker resolves, is what makes the whole system work.</p><p>Symbols are the glue that holds everything together. They&rsquo;re how we tell the linker &ldquo;here&rsquo;s a function called <span class="codespan-content"><code>main</code></span>&rdquo; or &ldquo;we need something called <span class="codespan-content"><code>printf</code></span> but don&rsquo;t have it.&rdquo;
+Without symbols, the linker would have no idea what to connect to what.</p><p>Finally, those mapping symbols (<span class="codespan-content"><code>$x</code></span> and <span class="codespan-content"><code>$d</code></span>) might seem like an odd detail, but they&rsquo;re what let tools like <span class="codespan-content"><code>objdump</code></span> correctly disassemble your code.
+Without them, a disassembler might try to interpret data as instructions, producing garbage output.</p><h2 id="whatrsquos-next">What&rsquo;s Next</h2><p>I&rsquo;ll be honest, this post was heavy on format details, alignment calculations, and offset management. These aren&rsquo;t the most exciting topics,
+but they&rsquo;re the foundation that makes everything else possible. If you have ideas on how to make this material more engaging 😅, or if you run into any issues, please feel free to open an issue on the repository.</p><p>In the next post, we&rsquo;ll build a complete operation table for ARM64 instructions. This will replace the hard-coded instruction encodings we used here.</p><h2 id="further-reading">Further Reading</h2><ol><li><a href="https://wiki.osdev.org/ELF">OS Dev ELF</a> - A well known website for os dev, they also covered the ELF format</li><li><a href="https://www.cs.cmu.edu/afs/cs/academic/class/15213-f00/docs/elf.pdf">ELF Doc</a> - A complete ELF doc</li><li><a href="https://gist.github.com/x0nu11byt3/bcb35c3de461e5fb66173071a2379779">ELF Cheetsheet</a> - A cheetsheet created by x0nu11byt3</li><li><a href="https://github.com/ARM-software/abi-aa/blob/main/aaelf64/aaelf64.rst">AArch64 ELF&rsquo;s Doc</a> - Since we are using AARCh64, we must need the AARCh64&rsquo;s ELF specification</li></ol><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/armasm.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/lisp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/scheme.min.js"></script>
+<script>
+(function() {
+    function rehighlight() {
+        if (typeof hljs !== 'undefined' && hljs.highlightAll) {
+            hljs.highlightAll();
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(rehighlight, 200);
+        });
+    } else {
+        setTimeout(rehighlight, 200);
+    }
+})();
+</script><script>
+// Image lightbox functionality
+(function() {
+    function initLightbox() {
+        // Check if already initialized
+        if (document.querySelector('.image-lightbox')) return;
+
+        // Create lightbox modal
+        const lightbox = document.createElement('div');
+        lightbox.className = 'image-lightbox';
+        lightbox.innerHTML = '<span class="image-lightbox-close">&times;</span><img src="" alt="">';
+        document.body.appendChild(lightbox);
+
+        const lightboxImg = lightbox.querySelector('img');
+        const closeBtn = lightbox.querySelector('.image-lightbox-close');
+
+        function openLightbox(img) {
+            lightboxImg.src = img.src;
+            lightboxImg.alt = img.alt || '';
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Use event delegation for all images
+        document.addEventListener('click', function(e) {
+            const img = e.target.closest('.quarkdown figure img, .quarkdown img');
+            if (img && !img.closest('.image-lightbox')) {
+                e.preventDefault();
+                openLightbox(img);
+            } else if (e.target === closeBtn || e.target === lightbox) {
+                closeLightbox();
+            }
+        });
+
+        // Close with ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+                closeLightbox();
+            }
+        });
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initLightbox);
+    } else {
+        initLightbox();
+    }
+})();
+</script><script>
+// Code block reference text functionality
+(function() {
+    function initCodeRefs() {
+        // Find all elements with data-code-ref attribute and match them to code blocks
+        const refElements = document.querySelectorAll('[data-code-ref]');
+        refElements.forEach(function(refEl) {
+            // Skip if already processed
+            if (refEl.hasAttribute('data-ref-processed')) return;
+
+            const refText = refEl.getAttribute('data-code-ref');
+            if (!refText) return;
+
+            // Find the next pre element after this element
+            let nextSibling = refEl.nextElementSibling;
+            while (nextSibling) {
+                if (nextSibling.tagName === 'PRE') {
+                    nextSibling.setAttribute('data-ref', refText);
+                    refEl.style.display = 'none';
+                    refEl.setAttribute('data-ref-processed', 'true');
+                    break;
+                }
+                nextSibling = nextSibling.nextElementSibling;
+            }
+        });
+
+        // Find all code blocks with data-ref attribute and create display elements
+        const codeBlocks = document.querySelectorAll('.quarkdown pre[data-ref]');
+        codeBlocks.forEach(function(pre) {
+            // Skip if already processed
+            if (pre.hasAttribute('data-ref-processed')) return;
+
+            const refText = pre.getAttribute('data-ref');
+            if (refText && !pre.querySelector('.code-ref-text')) {
+                const refElement = document.createElement('span');
+                refElement.className = 'code-ref-text';
+                refElement.textContent = refText;
+                pre.appendChild(refElement);
+            }
+
+            pre.setAttribute('data-ref-processed', 'true');
+        });
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCodeRefs);
+    } else {
+        initCodeRefs();
+    }
+
+    // Also run after a short delay to catch dynamically loaded content
+    setTimeout(initCodeRefs, 100);
+
+    // Use MutationObserver to handle dynamically added code blocks
+    const observer = new MutationObserver(function(mutations) {
+        initCodeRefs();
+    });
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+})();
+</script>
+</main>
+<aside id="margin-area-right" class="margin-area"></aside>
+</body>
+</html>
