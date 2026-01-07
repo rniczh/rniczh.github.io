@@ -6,7 +6,15 @@
     <description>rniczh.github.io/blog: A leisurely afternoon stroll</description>
     <language>en-us</language>
     <atom:link href="https://rniczh.github.io/feed.xml" rel="self" type="application/rss+xml" />
-    <lastBuildDate>Sun, 14 Dec 2025 15:47:51 -0500</lastBuildDate>
+    <lastBuildDate>Tue, 06 Jan 2026 02:03:26 -0500</lastBuildDate>
+
+    <item>
+        <title>BCFS: Object File Generation and the ELF Format &amp;mdash; Part II</title>
+        <link>https://rniczh.github.io/blog/20260106-Object-File-Generation-and-the-ELF-Format-Part-II/index.html</link>
+        <guid>https://rniczh.github.io/blog/20260106-Object-File-Generation-and-the-ELF-Format-Part-II/index.html</guid>
+        <description>&lt;img src=&quot;https://rniczh.github.io/blog/20260106-Object-File-Generation-and-the-ELF-Format-Part-II/media/compile-flow@-1130838952.jpg&quot; alt=&quot;Compile Flow&quot; style=&quot;max-width:100%;height:auto;&quot; /&gt;&lt;br/&gt;&lt;br/&gt;The difference between the almost right word and the right word is really a large matter. &amp;lsquo;tis the difference between the lightning bug and the lightning</description>
+        <pubDate>Tue, 06 Jan 2026 02:01:39 -0500</pubDate>
+    </item>
 
     <item>
         <title>BCFS: Object File Generation and the ELF Format &amp;mdash; Part I</title>
