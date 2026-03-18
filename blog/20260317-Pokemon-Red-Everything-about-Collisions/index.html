@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<!--suppress ALL -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pokémon Red - Everything about the Collisions</title>
+    <script src="script/quarkdown.js"></script>
+    <script>const capabilities = window.quarkdownCapabilities</script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="theme/theme.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.9.0/highlightjs-line-numbers.min.js"></script>
+    <script src="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.css"/>
+    <script>capabilities.code = true;</script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap');
+
+        body {
+            --qd-main-custom-font: 'Inter';
+            --qd-code-custom-font: 'Source Code Pro';
+            --qd-main-font-size: 14.0pt;
+        }
+
+        .page-break {
+            break-before: always;
+        }
+
+        .quarkdown-plain .page-break {
+            break-before: avoid;
+            break-after: avoid;
+        }
+
+        body.quarkdown-plain {
+            margin: 2.5cm 2.5cm 2.5cm 2.5cm;
+        }
+
+        body.quarkdown-slides .reveal {
+            width: 8.5in;
+            height: 11.0in;
+        }
+
+        @page {
+            size: 8.5in 11.0in;
+            margin: 2.5cm 2.5cm 2.5cm 2.5cm;
+        }
+
+        p {
+        }
+    </style>
+    <script>
+        const doc = new PlainDocument();
+        prepare(doc);
+    </script>
+</head>
+<body class="quarkdown quarkdown-plain">
+<aside id="margin-area-left" class="margin-area"></aside>
+<main>
+    <style data-hidden="">:root {
+    --qd-code-block-font-size: 11pt;
+    --qd-code-block-font-size: 11pt;
+}
+
+/* Code block background */
+.quarkdown pre {
+    background-color: #f5f5f5;
+    padding: 0em;
+    position: relative;
+}
+
+.quarkdown pre code {
+    background-color: transparent;
+}
+
+/* Code block reference text styling */
+.quarkdown pre[data-ref] {
+    margin-bottom: 1.5em !important;
+    padding-bottom: 0.5em !important;
+    overflow: visible !important;
+}
+
+.quarkdown pre .code-ref-text {
+    position: absolute !important;
+    bottom: -1.2em !important;
+    right: 0 !important;
+    font-size: 0.7em !important;
+    color: #888 !important;
+    font-style: italic !important;
+    pointer-events: none !important;
+    white-space: nowrap !important;
+    z-index: 10 !important;
+    line-height: 1.2 !important;
+}
+
+
+/* Heading subtitle styling - for date and author below h1 */
+.quarkdown .heading-subtitle {
+    display: block;
+    margin-top: -0.3em;
+    margin-bottom: 1em;
+    font-size: 1em !important;
+    color: #666 !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    line-height: 1.4;
+}
+
+.quarkdown h1 + .heading-subtitle,
+.quarkdown h1 + span.heading-subtitle {
+    display: block;
+    margin-top: -0.3em;
+    margin-bottom: 1em;
+    font-size: 1em !important;
+    color: #666 !important;
+    font-weight: normal !important;
+}
+
+/* Inline code styling - reduce padding and margin */
+.quarkdown .codespan-content {
+    margin: 0 0.1em;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+}
+
+/* Excel-style table */
+.quarkdown table:not(pre table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5em 0;
+    background-color: #fff;
+    border: 1px solid #d0d7de;
+}
+
+.quarkdown table:not(pre table) th {
+    background-color: #f6f8fa;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.6em 0.8em;
+    border: 1px solid #d0d7de;
+    color: #24292f;
+    line-height: 1.6;
+}
+
+.quarkdown table:not(pre table) td {
+    padding: 0.6em 0.8em;
+    border: 1px solid #d0d7de;
+    color: #24292f;
+    line-height: 1.6;
+}
+
+.quarkdown table:not(pre table) tr:hover {
+    background-color: #f6f8fa;
+}
+
+/* Override beaver theme: heading color red → blue */
+.quarkdown h1, .quarkdown h2, .quarkdown h3, .quarkdown h4, .quarkdown h5, .quarkdown h6 {
+    color: #1e3a8a !important;
+}
+
+/* Reduce heading font sizes */
+.quarkdown h1 {
+    font-size: 2.2em !important;
+    --h-font-scale: 2.2;
+    background-color: transparent !important;
+}
+
+.quarkdown h2 {
+    font-size: 1.7em !important;
+    --h-font-scale: 1.7;
+}
+
+.quarkdown h3 {
+    font-size: 1.4em !important;
+    --h-font-scale: 1.4;
+}
+
+.quarkdown h4 {
+    font-size: 1.25em !important;
+    --h-font-scale: 1.25;
+}
+
+.quarkdown h5, .quarkdown h6 {
+    font-size: 1.15em !important;
+    --h-font-scale: 1.15;
+}
+
+/* Hide line numbers in code blocks
+.quarkdown .hljs-ln-numbers {
+    display: none !important;
+}
+*/
+
+
+.quarkdown blockquote {
+    font-size: 0.9em !important;
+}
+
+/* Remove left border from plain blockquote */
+.quarkdown blockquote:not([class]) {
+    font-size: 1em !important;
+    border-left: none !important;
+    font-family: "Georgia", "Times New Roman", "Times", serif;
+    font-style: italic;
+    padding-left: 1.5em !important;
+    color: #555;
+}
+
+/* Image lightbox effect */
+.quarkdown figure img,
+.quarkdown img {
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+
+/* Add onclick handler via CSS */
+.quarkdown figure img,
+.quarkdown img {
+    pointer-events: auto;
+}
+
+/* Fix sidebar: hidden text should not be clickable */
+.quarkdown .sidebar a {
+    overflow: hidden;
+    position: relative;
+}
+
+/* Completely hide and disable text when not hovering */
+.quarkdown .sidebar a:not(:hover) span {
+    pointer-events: none !important;
+    visibility: hidden;
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.quarkdown .sidebar a:hover span {
+    pointer-events: auto;
+    visibility: visible;
+    position: static;
+    opacity: 1;
+    width: auto;
+    height: auto;
+}
+
+/* Reduce sidebar text size to prevent clipping */
+.quarkdown .sidebar a span {
+    font-size: 0.85em !important;
+    line-height: 1.3 !important;
+}
+
+/* Limit clickable area to only the visible line when not hovering */
+.quarkdown .sidebar a:not(:hover) {
+    clip-path: inset(0 0 0 0);
+}
+
+/* Lightbox modal */
+.image-lightbox {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    animation: fadeIn 0.3s;
+}
+
+.image-lightbox.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-lightbox img {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    animation: zoomIn 0.3s;
+    cursor: default;
+}
+
+.image-lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    transition: opacity 0.3s;
+}
+
+.image-lightbox-close:hover {
+    opacity: 0.7;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+#margin-area-left, #margin-area-right {
+    display: none !important;
+}
+body.quarkdown.quarkdown-plain {
+    justify-content: center !important;
+}
+body.quarkdown.quarkdown-plain > main {
+    max-width: 800px !important;   /* Maximum content width */
+    width: 90% !important;         /* Use 90% of available space */
+    margin: 0 auto !important;     /* Center horizontally */
+}
+
+/* Ensure images in row have consistent sizing and are centered */
+.quarkdown .stack-row {
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.quarkdown .stack-row p {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0.5cm;
+    width: 100%;
+    text-align: center !important;
+    margin: 0 auto !important;
+}
+
+.quarkdown .stack-row img {
+    display: inline-block !important;
+    vertical-align: middle !important;
+    margin: 0 auto !important;
+}
+
+.quarkdown .row figure {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+}
+
+.quarkdown .row figure img,
+.quarkdown .row img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto !important;
+}
+
+/* Beautiful horizontal rule */
+.quarkdown hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(to right, transparent, #d0d7de 20%, #d0d7de 80%, transparent);
+    margin: 2em 0;
+    width: 100%;
+}
+
+/* Custom square list with hollow blue squares */
+.quarkdown .custom-square-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+.quarkdown .custom-square-list li {
+    position: relative;
+    padding-left: 1.5em;
+    margin-bottom: 0.5em;
+}
+.quarkdown .custom-square-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.4em;
+    width: 0.4em;
+    height: 0.4em;
+    border: 1.5px solid #1e3a8a;
+    background: transparent;
+}</style><h1 id="pokémon-red-mdash-everything-about-the-collisions" data-decorative="">Pokémon Red &mdash; Everything about the Collisions</h1><span class="heading-subtitle">Mar 17, 2026 · Hong-Sheng Zheng</span><figure><img src="media/reds-different-facing@-1652649570.jpg" alt="REDs Different Facing" style="width: 70.0%;" /></figure><p>This is my first time digging into Pokémon Red.
+I found it interesting, so I&rsquo;m sharing it here :) About the Collision.</p><p>In Pokémon Red (and Blue), every step you take is governed by collision:
+which tiles you can stand on, where grass and water are,
+and how NPCs interact with the map.
+This post walks through how collisions work under the hood.</p><h2 id="what-ldquocollisionrdquo-means-here">What &ldquo;Collision&rdquo; Means Here</h2><p>If you&rsquo;ve played games before, you already know what collision feels like:
+you try to move forward and you stop, you can&rsquo;t go any farther.
+That&rsquo;s collision, whether it&rsquo;s a wall, another NPC in the way, or even an NPC that&rsquo;s moving.
+In this post, &ldquo;collision&rdquo; means whether a given step is walkable, that is, whether you can stand on it. For example, you cannot stand on the same tile as an NPC. Many 2D games use a collision layers for their collision mechanism.
+Pokémon Red (Gen1) does not. Instead, each map (e.g. Pallet Town, Professor Oak’s lab) keeps its own walkable list, a list of every tile you can stand on in that map. That design may come from early ROM size limits or other historical reasons; either way,
+collision is tile-based and per-map.</p><p>For example, the image on the right shows which tiles from Pallet Town’s Oak’s Lab (left) are on the walkable list.
+Each tile has its own tile ID in the tileset for this map, and each tile is 8×8 pixels.</p><div style="justify-content: center; align-items: center;" class="stack stack-row"><p><img src="media/oak-lab@565710366.jpg" alt="Oak&rsquo;s Lab" style="width: 25.0%;" />
+<img src="media/walkable-tiles@1876930810.jpg" alt="Walkable Tiles in Oak&rsquo;s Lab" style="width: 50.0%;" /></p></div><p>Seeing the walkable tiles on the right raises a question: if you look closely, the walkable area seems to be &ldquo;just the floor&rdquo;, so aren’t those the same tile? In the rest of this post I&rsquo;ll clarify how this works step by step.
+<em>(By the way, ignore the color overlays in the left image for now; they just mark the positions of NPCs, warps, trainers, and the like.)</em></p><h2 id="map-structure-block-rarr-step-rarr-tile">Map Structure: Block &rarr; Step &rarr; Tile</h2><p>So a map is made of blocks; each block has a 2×2 grid of steps, and each step is 2×2 tiles.
+To make this concrete, let use Pallet town as an example.
+The left image shows the full map, each grid cell is one block (32×32 pixels).
+The right image zooms in on a single block, it has a 2×2 grid of steps, and each step is 2×2 tiles.
+So one tile is only 8×8 pixels, pretty small.</p><div style="justify-content: center; align-items: center;" class="stack stack-row"><p><img src="media/Pallet-Town-Blocks@-460601163.jpg" alt="Pallet Town Blocks" style="width: 30.0%;" />
+<img src="media/block-step@2051839501.jpg" alt="A Step" style="width: 50.0%;" /></p></div><p>To sum up:</p><table><thead><tr><th>Layer</th><th>What it is</th><th>Size / relation</th></tr></thead><tbody><tr><td><strong>Map</strong></td><td>One full map</td><td><span class="codespan-content"><code>width_blocks</code></span> × <span class="codespan-content"><code>height_blocks</code></span> blocks</td></tr><tr><td><strong>Block</strong></td><td>One cell of the map</td><td>1 block (16bytes) = 2×2 steps</td></tr><tr><td><strong>Step</strong></td><td>The unit of movement</td><td>1 step = 2×2 tiles</td></tr><tr><td><strong>Tile</strong></td><td>Smallest graphic unit</td><td>8×8 pixels, has a tile ID (0x00–0xFF)</td></tr></tbody></table><h2 id="walkable">Walkable?</h2><p>After the structure we saw above, you might wonder:
+if collision is decided per tile, the character seems bigger than a single tile, right?
+First, where does the character sprite actually stand? If you look at RED&rsquo;s position in the left image,
+you&rsquo;ll see that the sprite isn&rsquo;t aligned to the tile grid, it&rsquo;s offset by 4 pixels on the y-axis.
+That&rsquo;s just a rendering choice, in logic, the game still treats the sprite as being on the correct position.
+When drawing, it shifts the sprite up by 4 pixels.
+So RED is standing on one step (four tiles), not counting the extra tile the sprite overlaps above.
+Movement is also in steps, each press of a direction key moves RED one step.</p><figure><img src="media/red-positions@-245118987.jpg" alt="RED Position" style="width: 70.0%;" /></figure><p>But collision is checked per tile.
+A step has four tiles, yet Pokémon Red doesn&rsquo;t look at all four, it only checks one tile:
+the <strong>bottom-left</strong> one.
+The image below shows this. So no matter which direction you move, the game decides whether the step is allowed by checking if that bottom-left tile is in the walkable list.</p><figure><img src="media/bottom-left-collision@504429461.jpg" alt="Bottom Left Collision" style="width: 45.0%;" /></figure><p>Back to the Oak&rsquo;s Lab walkable list,
+if you look at which tiles actually appear in Oak&rsquo;s Lab,
+you&rsquo;ll see that the only tiles that match the &ldquo;bottom-left tile when you step&rdquo;
+are the wooden floor and the carpet by the door.
+The other tiles in the walkable list don&rsquo;t show up in that map.
+That&rsquo;s because one tileset is reused across many maps.
+The game reuses tiles as much as possible to keep the number of tilesets down,
+but when marking a tile as walkable in a tileset,
+the designers had to be careful not to create unexpectedly walkable spots on maps that use that tileset.</p><h3 id="sprites-collision">Sprites collision</h3><p>Sprites collision works differently from tile collision.
+It is sprite against sprite, the game uses the two sprites&rsquo; screen pixel coordinates to compute distance.
+If they are close enough, it counts as a collision.</p><figure><img src="media/sprite-collision@-193153685.jpg" alt="Sprite Collision" style="width: 40.0%;" /></figure><p>Each frame the game calls a function to detect collisions between sprites.
+For the current sprite (the player), it computes where the &ldquo;front edge&rdquo; of the body would be after moving in the chosen direction.
+It then loops over every visible sprite on screen (up to 15) and computes each one&rsquo;s front edge or position the same way.
+If the distance in both Y and X is within the threshold (about 7 pixels when still, about 9 when moving),
+it counts as a collision and sets a direction bit in a collision data word (one bit per direction: up, down, left, right).
+When the player presses a direction key, the game reads the relevant bit from that collision data and <strong>AND</strong>s it with the direction for this frame.
+If the result is non-zero, there is an NPC in that direction, so movement is blocked. So who collides with whom is decided in pixels, and whether you can move depends on both the tile and these updated bits (a sprite may be in the way).</p><p>How does the game know which NPC or object is in front of you? That determines who you talk to. It loops over all NPC and object sprites and checks whether any sprite&rsquo;s y pixels and x pixels match the &ldquo;check point&rdquo; used for the forward collision test (that gets stored in an id; objects work the same way, so when you use Strength to push a boulder the game uses this to know which object it is).
+That is how it decides who or what is in front of you.</p><p>One exception: what if you are facing a counter? If the tile in front is a counter tile, the check uses 32 pixels ahead instead of 16. That is why you can talk to Joy in Pokémon Center across the counter. So you can see the gap between RED and Joy is one step.</p><figure><img src="media/face-to-joy@12991609.jpg" alt="Face to Joy" style="width: 40.0%;" /></figure><p>A few more things about NPCs:</p><ol><li><strong>NPC positions and the map border.</strong> At runtime the map has a 4-step border on all sides. When you read WRAM, the Y/X coordinates use that full grid (including the border) as the origin. To get an NPC&rsquo;s actual position on the map you have to subtract 4 from that value. I ran into this when loading the whole map and computing character positions, every sprite (NPC or object) was offset until I realized this border was the cause. You have to apply that -4 to get the real position.
+In the figure below, the left ASCII map shows the uncorrected case: the NPC (N) is offset and gets clamped at the border. The middle map is the corrected one (with the -4 adjustment applied).</li></ol><div style="justify-content: center; align-items: center;" class="stack stack-row"><p><img src="media/wrong-map@1369383523.jpg" alt="Wrong Map" style="width: 20.0%;" />
+<img src="media/correct-map@1878103422.jpg" alt="Correct Map" style="width: 18.6%;" />
+<img src="media/home@-148862658.jpg" alt="Home" style="width: 35.0%;" /></p></div><ol start="2"><li><strong>Invisible sprites.</strong> A sprite can be hidden in two cases: (a) it is off screen, or (b) it is a placeholder. Off screen is straightforward: you can still find the sprite in data, but a &ldquo;visible&rdquo; bit is set to 0.
+What is a placeholder? In Pallet Town (see the image below) one NPC is not on screen: Professor Oak (marked N in the diagram). When you first enter Route 1 the story triggers and Oak appears from this hidden spot, then moves next to you and takes you back to Oak&rsquo;s lab. The game uses this pattern in many places for scripted events.
+In this case, these sprites do not collide with you. Each frame the game runs the sprite collision check and does this first: if the bit in that sprite&rsquo;s data is set, the game skips it and does not count it as colliding with the player.</li></ol><div style="justify-content: center; align-items: center;" class="stack stack-row"><p><img src="media/Pallet-Town-Blocks@-460601163.jpg" alt="Pallet Town Blocks" style="width: 40.0%;" />
+<img src="media/invisible-sprite@1968416676.jpg" alt="Invisible Sprite" style="width: 40.0%;" /></p></div><h3 id="ledges-one-way-jump-down">Ledges (one-way jump down)</h3><p>You have seen those short ledges in the overworld
+where you can step off and drop down, but you cannot walk back up from below.
+The game calls these &ldquo;ledges&rdquo; and handles them separately from normal tile collision.</p><figure><img src="media/jump@82298352.gif" alt="Jump" style="width: 50.0%;" /></figure><blockquote class="note" style="--quote-type-label: 'Note';" data-labeled=""><p>Ledge Tile IDs: <span class="codespan-content"><code>0x37</code></span>, <span class="codespan-content"><code>0x36</code></span>, <span class="codespan-content"><code>0x27</code></span>. High Groud Tile IDs: <span class="codespan-content"><code>0x2C</code></span>, <span class="codespan-content"><code>0x39</code></span></p></blockquote><p>Collision is still tile-based: the tiles that form the &ldquo;cliff&rdquo; (e.g. <span class="codespan-content"><code>0x37</code></span>, <span class="codespan-content"><code>0x36</code></span>, <span class="codespan-content"><code>0x27</code></span>) are not in the walkable list,
+so normally you cannot step onto them.</p><p>So how can you land on a ledge tile when you jump down?
+The game uses a small table, LedgeTiles. Each entry is (facing, tile under your feet, tile in front, direction key). For example: facing down, standing on tile <span class="codespan-content"><code>0x2C</code></span> or <span class="codespan-content"><code>0x39</code></span> (high ground), with a ledge tile (<span class="codespan-content"><code>0x37</code></span>, <span class="codespan-content"><code>0x36</code></span>, etc.) in front, and you are holding down.
+When that matches, the engine does two things in order.</p><ol><li>It sets a flag (BIT_LEDGE_OR_FISHING) meaning &ldquo;next frame treat this as a ledge jump&rdquo;.</li><li>It queues a simulated &ldquo;down ↓&rdquo; input for the next frame.</li></ol><p>On the first frame the usual collision still runs, so you do not move yet (the ledge tile is not walkable).
+On the next frame the simulated input runs again, but this time the collision code sees the flag and skips the &ldquo;can I walk onto this tile?&rdquo; check, so the game allows you to move onto the ledge tile and you land below.
+From the lower side, your feet are not on <span class="codespan-content"><code>0x2C/0x39</code></span> and the tile in front is still not in the walkable table, so you can never walk up. That is why ledges are one-way, only the &ldquo;high to low&rdquo; direction is special-cased with the flag and the extra simulated step.</p><p>Refernece code:</p><span data-code-ref="pokered/data/tilesets/ledge_tiles.asm"></span><pre><code class="language-text">LedgeTiles:
+  ; player direction, tile player standing on, ledge tile, input required
+  db SPRITE_FACING_DOWN,  $2C, $37, PAD_DOWN
+  db SPRITE_FACING_DOWN,  $39, $36, PAD_DOWN
+  db SPRITE_FACING_DOWN,  $39, $37, PAD_DOWN
+  db SPRITE_FACING_LEFT,  $2C, $27, PAD_LEFT
+  db SPRITE_FACING_LEFT,  $39, $27, PAD_LEFT
+  db SPRITE_FACING_RIGHT, $2C, $0D, PAD_RIGHT
+  db SPRITE_FACING_RIGHT, $2C, $1D, PAD_RIGHT
+  db SPRITE_FACING_RIGHT, $39, $0D, PAD_RIGHT
+  db -1 ; end</code></pre><h3 id="land-and-water-boundary">Land and water boundary</h3><p>Water uses tile ID <span class="codespan-content"><code>0x14</code></span>. On land, that ID is not in the walkable list,
+so the game never lets you step onto water by walking.
+A second rule is the land–water pair table TilePairCollisionsWater,
+certain (tile A, tile B) pairs are marked as &ldquo;do not cross in one step&rdquo;.
+So moving from a land tile onto a water tile in a single step is blocked.
+You cannot cross the shore by walking, you must use move Surf.</p><span data-code-ref="pokered/data/tilesets/pair_collision_tile_ids.asm"></span><pre><code class="language-text">TilePairCollisionsWater::
+  db FOREST, $14, $2E
+  db FOREST, $48, $2E
+  db CAVERN, $14, $05
+  db -1 ; end</code></pre><p><strong>But how Surf gets you onto water?</strong>
+When you use Surf,
+the game calls ItemUseSurfboard function.
+It first checks tile in front of you is <span class="codespan-content"><code>0x14</code></span> (water) or a shore tile (e.g. <span class="codespan-content"><code>0x32</code></span>, <span class="codespan-content"><code>0x48</code></span>), if so, Surf is allowed. I
+t then:</p><ol><li>queues one simulated &ldquo;forward →&rdquo; input</li><li>sets wWalkBikeSurfState = 2 (surfing)</li></ol><p>On the next frame the overworld handles that input, because you are already in surf state, it uses CollisionCheckOnWater collision function for water instead of land collision.
+The tile in front is <span class="codespan-content"><code>0x14</code></span>, so the game allows the move and you step onto the water. So this is how you getting onto water by using Surf.</p><div style="justify-content: center; align-items: center;" class="stack stack-row"><p><img src="media/shore-and-water@1632463782.jpg" alt="Shore and Water" style="width: 40.0%;" />
+<img src="media/surf@-1278618121.jpg" alt="Surf" style="width: 50.0%;" /></p></div><p>In the reverse, you get off Surf and stand on land if it&rsquo;s walkable land. So land vs water is the same &ldquo;one tile in front&rdquo;, only the interpretation changes
+(land collision says &ldquo;0x14 = block&rdquo;, surf collision says &ldquo;0x14 = allow&rsquo;).</p><h2 id="summary">Summary</h2><p>Thanks for reading. This post is a bit of my journey while trying to understand how collision works in Pokémon Red. I hope it helps if you are digging into the same thing, or if you just happened to pass by and found it interesting.</p><h2 id="further-reading">Further Reading</h2><ol><li><a href="https://github.com/pret/pokered">pret/pokered</a> — Disassembly and data layouts.</li><li><a href="https://datacrystal.romhacking.net/wiki/Pokémon_Red/Blue:RAM_map">Data Crystal: Pokémon Red/Blue RAM map</a> — Byte-level WRAM reference.</li><li><a href="https://blog.vjeux.com/2023/project/pokemon-red-blue-map.html">Vjeux – Pokemon Red/Blue Map</a> — Full Kanto map rendering.</li></ol><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/armasm.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/lisp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/scheme.min.js"></script>
+<script>
+(function() {
+    function rehighlight() {
+        if (typeof hljs !== 'undefined' && hljs.highlightAll) {
+            hljs.highlightAll();
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(rehighlight, 200);
+        });
+    } else {
+        setTimeout(rehighlight, 200);
+    }
+})();
+</script><script>
+// Image lightbox functionality
+(function() {
+    function initLightbox() {
+        // Check if already initialized
+        if (document.querySelector('.image-lightbox')) return;
+
+        // Create lightbox modal
+        const lightbox = document.createElement('div');
+        lightbox.className = 'image-lightbox';
+        lightbox.innerHTML = '<span class="image-lightbox-close">&times;</span><img src="" alt="">';
+        document.body.appendChild(lightbox);
+
+        const lightboxImg = lightbox.querySelector('img');
+        const closeBtn = lightbox.querySelector('.image-lightbox-close');
+
+        function openLightbox(img) {
+            lightboxImg.src = img.src;
+            lightboxImg.alt = img.alt || '';
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Use event delegation for all images
+        document.addEventListener('click', function(e) {
+            const img = e.target.closest('.quarkdown figure img, .quarkdown img');
+            if (img && !img.closest('.image-lightbox')) {
+                e.preventDefault();
+                openLightbox(img);
+            } else if (e.target === closeBtn || e.target === lightbox) {
+                closeLightbox();
+            }
+        });
+
+        // Close with ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+                closeLightbox();
+            }
+        });
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initLightbox);
+    } else {
+        initLightbox();
+    }
+})();
+</script><script>
+// Code block reference text functionality
+(function() {
+    function initCodeRefs() {
+        // Find all elements with data-code-ref attribute and match them to code blocks
+        const refElements = document.querySelectorAll('[data-code-ref]');
+        refElements.forEach(function(refEl) {
+            // Skip if already processed
+            if (refEl.hasAttribute('data-ref-processed')) return;
+
+            const refText = refEl.getAttribute('data-code-ref');
+            if (!refText) return;
+
+            // Find the next pre element after this element
+            let nextSibling = refEl.nextElementSibling;
+            while (nextSibling) {
+                if (nextSibling.tagName === 'PRE') {
+                    nextSibling.setAttribute('data-ref', refText);
+                    refEl.style.display = 'none';
+                    refEl.setAttribute('data-ref-processed', 'true');
+                    break;
+                }
+                nextSibling = nextSibling.nextElementSibling;
+            }
+        });
+
+        // Find all code blocks with data-ref attribute and create display elements
+        const codeBlocks = document.querySelectorAll('.quarkdown pre[data-ref]');
+        codeBlocks.forEach(function(pre) {
+            // Skip if already processed
+            if (pre.hasAttribute('data-ref-processed')) return;
+
+            const refText = pre.getAttribute('data-ref');
+            if (refText && !pre.querySelector('.code-ref-text')) {
+                const refElement = document.createElement('span');
+                refElement.className = 'code-ref-text';
+                refElement.textContent = refText;
+                pre.appendChild(refElement);
+            }
+
+            pre.setAttribute('data-ref-processed', 'true');
+        });
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCodeRefs);
+    } else {
+        initCodeRefs();
+    }
+
+    // Also run after a short delay to catch dynamically loaded content
+    setTimeout(initCodeRefs, 100);
+
+    // Use MutationObserver to handle dynamically added code blocks
+    const observer = new MutationObserver(function(mutations) {
+        initCodeRefs();
+    });
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+})();
+</script>
+</main>
+<aside id="margin-area-right" class="margin-area"></aside>
+</body>
+</html>
