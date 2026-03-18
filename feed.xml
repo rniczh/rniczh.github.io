@@ -6,14 +6,22 @@
     <description>rniczh.github.io/blog: A leisurely afternoon stroll</description>
     <language>en-us</language>
     <atom:link href="https://rniczh.github.io/feed.xml" rel="self" type="application/rss+xml" />
-    <lastBuildDate>Tue, 06 Jan 2026 02:03:26 -0500</lastBuildDate>
+    <lastBuildDate>Tue, 17 Mar 2026 20:12:24 -0400</lastBuildDate>
+
+    <item>
+        <title>Pokémon Red &amp;mdash; Everything about the Collisions</title>
+        <link>https://rniczh.github.io/blog/20260317-Pokemon-Red-Everything-about-Collisions/index.html</link>
+        <guid>https://rniczh.github.io/blog/20260317-Pokemon-Red-Everything-about-Collisions/index.html</guid>
+        <description>&lt;img src=&quot;https://rniczh.github.io/blog/20260317-Pokemon-Red-Everything-about-Collisions/media/reds-different-facing@-1652649570.jpg&quot; alt=&quot;REDs Different Facing&quot; style=&quot;max-width:100%;height:auto;&quot; /&gt;&lt;br/&gt;&lt;br/&gt;This is my first time digging into Pokémon Red. I found it interesting, so I&amp;rsquo;m sharing it here :) About the Collision.</description>
+        <pubDate>Tue, 17 Mar 2026 17:43:07 -0400</pubDate>
+    </item>
 
     <item>
         <title>BCFS: Object File Generation and the ELF Format &amp;mdash; Part II</title>
         <link>https://rniczh.github.io/blog/20260106-Object-File-Generation-and-the-ELF-Format-Part-II/index.html</link>
         <guid>https://rniczh.github.io/blog/20260106-Object-File-Generation-and-the-ELF-Format-Part-II/index.html</guid>
         <description>&lt;img src=&quot;https://rniczh.github.io/blog/20260106-Object-File-Generation-and-the-ELF-Format-Part-II/media/compile-flow@-1130838952.jpg&quot; alt=&quot;Compile Flow&quot; style=&quot;max-width:100%;height:auto;&quot; /&gt;&lt;br/&gt;&lt;br/&gt;The difference between the almost right word and the right word is really a large matter. &amp;lsquo;tis the difference between the lightning bug and the lightning</description>
-        <pubDate>Tue, 06 Jan 2026 02:01:39 -0500</pubDate>
+        <pubDate>Wed, 07 Jan 2026 01:19:02 -0500</pubDate>
     </item>
 
     <item>
